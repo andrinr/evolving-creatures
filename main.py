@@ -1,2 +1,1 @@
-print("hello")
-print('world')
+import numpy as np
