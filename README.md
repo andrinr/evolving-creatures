@@ -2,8 +2,8 @@
 
 ## Concepts and Ideas:
 
-Height map
-Neuronal network
-Moving speed
-Sensors
-Species
+- Height map
+- Neuronal network
+- Moving speed
+- Sensors
+- Species
