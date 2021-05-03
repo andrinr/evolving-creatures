@@ -3,7 +3,9 @@
 ## Concepts and Ideas:
 
 - Height map
-- Neuronal network
 - Moving speed
 - Sensors
 - Species
+- altruism: sacrifice
+
+- Neuronal network
