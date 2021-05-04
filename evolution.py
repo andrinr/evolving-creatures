@@ -34,7 +34,14 @@ class Evolution:
         for index in indices:
             creature = self.__creatureList[int(index)]
 
-            itmes = creatureGrid.sense(3, creature.x, creature.y)
-            creature.process(itmes)
+            otherCreatures = creatureGrid.sense(6, creature.x, creature.y)
+            creature.process(otherCreatures)
+
+        for creature in self.__creatureList:
+            creature.move()
+
+    def plot(self, ax):
+        for creature in self.__creatureList:
+            creature.plot(ax)
 
             

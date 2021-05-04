@@ -26,4 +26,9 @@ Therefore exection order is randomized and a creature first in list does not ben
 4. Eating food takes one frame or does it slowly eat of the food?
 5. When does the food regrow?
 6. Where do the children spawn?
+7. Do we have periodic boundaries?
 
+## Issues
+
+1. Periodic boundaries do not work for vision
+2. Vision seems buggy
