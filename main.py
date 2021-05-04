@@ -6,17 +6,18 @@ from evolution import Evolution
 # Parameters
 NFRAMES = 1<<10
 SUBFRAMES = 1
-VDIST = 3
 NCREATURES = 10
+GRIDSIZE = 200
 
-evolution = Evolution((200,200), VDIST, NCREATURES)
+evolution = Evolution(GRIDSIZE, NCREATURES)
 
 fig = plt.figure(constrained_layout=True)
 gs = fig.add_gridspec(1, 2)
 axLeft = fig.add_subplot(gs[:,0])
-axRight = fig.add_subplot(gs[:,1])
+axLeft.set_xlim(0,GRIDSIZE)
+axLeft.set_ylim(0,GRIDSIZE)
 
-foodPlot = axLeft.imshow(evolution.foodGrid)
+axRight = fig.add_subplot(gs[:,1])
 
 def fetchCreaturePositions(evolution):
     creaturePositions = np.zeros((len(evolution.creatureList), 2))
@@ -30,17 +31,13 @@ creaturePlot = axLeft.scatter(creaturePositions[:,0], creaturePositions[:,1])
 
 
 def update(time):
-    global foodPlot, creaturePlot, evolution
     # For efficency do not draw every update
     for i in range(SUBFRAMES):
         evolution.update()
 
-    foodPlot.set_array(evolution.foodGrid)
-
     creaturePositions = fetchCreaturePositions(evolution)
     creaturePlot.set_offsets(creaturePositions)
     return
-
 
 animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=10, repeat=False)
 
