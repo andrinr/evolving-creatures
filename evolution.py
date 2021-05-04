@@ -8,7 +8,7 @@ class Evolution:
 
         self.__N = N
 
-        # Init random gnerator
+        # Init random generator
         self.__rg = np.random.default_rng()
 
         self.__creatureList = []
@@ -30,15 +30,13 @@ class Evolution:
         indices = np.linspace(0, len(self.__creatureList)-1, num=len(self.__creatureList))
         self.__rg.shuffle(indices)
 
-        creatureGrid = Grid(self.__N, self.__creatureList)
         for index in indices:
+            # TODO: Could be optimized
+            creatureGrid = Grid(self.__N, self.__creatureList)
             creature = self.__creatureList[int(index)]
 
             otherCreatures = creatureGrid.sense(6, creature.x, creature.y)
             creature.process(otherCreatures)
-
-        for creature in self.__creatureList:
-            creature.move()
 
     def plot(self, ax):
         for creature in self.__creatureList:

@@ -12,17 +12,12 @@ class Creature(GridItem):
         return
 
     # Creature processes senses and plans next move
+    # Illegal moves (Moving into occupied field) have to be checked for in this function
     def process(self, otherCreatures):
         self.__otherCreatures = otherCreatures
-        self.__nextPos = self._pos + self.__rg.integers(low=-1, high=2, size=2)
+        self._pos = self._pos + self.__rg.integers(low=-1, high=2, size=2)
         return
 
-    # Creature makes next move
-    # This cannot be made in the process() method since then we would 
-    # need to update the the grid n times, which is very ineffcient
-    # Theoretically creatures could update their positions inside the grid themselves
-    def move(self):
-        self._pos = self.__nextPos
 
     def plot(self, ax):
         ax.scatter(self.x, self.y)

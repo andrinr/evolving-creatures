@@ -49,7 +49,7 @@ class Grid:
 
                 item = self.__data[x_][y_]
 
-                if item is not None and x_ != x and y_ != y:
+                if item is not None and (x_ != x or y_ != y):
                     tuples.append(((x_,y_), item))
 
         return tuples

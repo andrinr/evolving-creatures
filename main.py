@@ -27,6 +27,6 @@ def update(time):
     evolution.plot(axLeft)
     return
 
-animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=10, repeat=False)
+animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=300, repeat=False)
 
 plt.show()
