@@ -1,2 +1,4 @@
 .zip
 .dccache
+.vscode/
+__pycache__/
