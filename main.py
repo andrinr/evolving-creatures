@@ -5,8 +5,10 @@ from evolution import Evolution
 
 # Parameters
 NFRAMES = 100
+SUBFRAMES = 100
+VDIST = 3
 
-evolution = Evolution((200,200))
+evolution = Evolution((200,200), VDIST)
 
 fig = plt.figure(constrained_layout=True)
 gs = fig.add_gridspec(1, 2)
@@ -16,8 +18,11 @@ axRight = fig.add_subplot(gs[:,1])
 foodPlot = axLeft.imshow(evolution.foodGrid)
 
 def update(time):
-    evolution.update()
-    foodPlot.imshow(evolution.foodGrid)
+    # For efficency do not draw every update
+    for i in range(SUBFRAMES):
+        evolution.update()
+
+    foodPlot.set_array(evolution.foodGrid)
     return
 
 

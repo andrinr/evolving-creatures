@@ -10,9 +10,13 @@ class Evolution:
         # Init random gnerator
         self.__rg = np.random.default_rng()
 
+        # Double bookeeping to avoid n*n checks
         self.__creatureList = []
         self.__creatureGrid = np.zeros(gridSize)
+
         self.__foodGrid = np.sign(self.__rg.random(gridSize)-0.95)
+        
+        # TODO: height map with perlin noise
 
     @ property
     def foodGrid(self):
@@ -24,12 +28,13 @@ class Evolution:
 
     def update(self):
         # Make sure no creature benefits from being picked first at all times
-        indices = np.linspace(0, len(self.__creatureList))
-
+        indices = np.linspace(0, len(self.__creatureList), num=len(self.__creatureList))
+        print(indices)
         self.__rg.shuffle(indices)
-
+        print(indices)
         for index in indices:
-            creature = self.__creatureList[index]
+            print(int(index))
+            creature = self.__creatureList[int(index)]
             if (self.__creatureGrid[creature.x, creature.y] != creature):
                 print("ERROR in bookeeping of creatures")
 

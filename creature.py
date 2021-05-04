@@ -3,16 +3,12 @@ import numpy as np
 class creature:
 
     def __init__(self, pos):
-        self.__pos = pos
-        self.__energy = 1
         return
 
+    
+    # These interfaces seem to make sense for world interaction
     def vision(self, creatures, foods):
         return
-
-    @ property
-    def energy(self):
-        return self.__energy
 
     @ property
     def x(self):
