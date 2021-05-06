@@ -41,7 +41,6 @@ class Creature(Figure):
     @staticmethod
     def plotAll(ax):
         for creature in Creature.creatureList:
-            print(creature.color)
             ax.scatter(creature.x, creature.y)
 
         # Plot food
