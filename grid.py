@@ -54,7 +54,3 @@ class Grid:
 
         return tuples
 
-                
-
-
-
