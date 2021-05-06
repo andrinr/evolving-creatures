@@ -1,64 +1,73 @@
-# import numpy as np
-# from grid import GridItem
-
-# class Creature(GridItem):
-
-#     def __init__(self, pos):
-#         super().__init__(pos)
-
-#         # Init random gnerator
-#         self.__rg = np.random.default_rng()
-
-#         return
-
-#     # Creature processes senses and plans next move
-#     # Illegal moves (Moving into occupied field) have to be checked for in this function
-#     def process(self, otherCreatures):
-#         self.__otherCreatures = otherCreatures
-#         self._pos = self._pos + self.__rg.integers(low=-1, high=2, size=2)
-#         return
-
-
-#     def plot(self, ax):
-#         ax.scatter(self.x, self.y)
-
-#         for other in self.__otherCreatures:
-
-#             ax.plot(
-#                 [self.x, other[0][0]],
-#                 [self.y, other[0][1]], c="red")
-            
-
 import numpy as np
+from grid import Figure, Food
+from scipy.sparse import random
 
-class Creature:
+class Creature(Figure):
 
+    # Creature params
     genomThreshold = 0.2
-    maxPos = 0
-    number = 0
 
-    def __init__(self, pos, energy, N):
-        Creature.number += 1
-        Creature.maxPos = N-1
-        self.pos = pos
-        self.energy = 1
-        self.radius = 2
+    creatureList = []
+    creatureGrid = np.array([],dtype=object)
+    foodGrid = np.array([],dtype=object)
 
-        self.alive = True
-        # self.isMale = False
+    rg = np.random.default_rng()
 
-        # self.parameters = np.random.random(N)
+    @staticmethod
+    def updateAll():
+        n = len(Creature.creatureList)
+        indices = np.linspace(0, n-1, num=n, dtype=int)
+        Creature.rg.shuffle(indices)
+
+        for index in indices:
+            Creature.creatureList[index].update()
+
+        return
+
+    @staticmethod
+    def initAll(N, creatureDensity, foodDensity):
+        Creature.N = N
+        Creature.creatureGrid = np.zeros((N,N), dtype=object)
+        Creature.foodGrid = np.zeros((N,N), dtype=object)
+
+        for i in range(N):
+            for j in range(N):
+                if (Creature.rg.random() < creatureDensity):
+                    Creature.creatureGrid[i,j] = Creature(np.array([i,j]), Creature.rg.random())
+
+                if (Creature.rg.random() < foodDensity):
+                    Creature.foodGrid[i,j] = Food()
+
+    @staticmethod
+    def plotAll(ax):
+        for creature in Creature.creatureList:
+            ax.scatter(creature.x, creature.y)
+
+    def __init__(self, pos, radius):
+        super().__init__()
+        self._pos = pos
+        self._radius = radius
+        Creature.creatureList.append(self)
+        Creature.creatureGrid[self._pos] = self
+
+    def update(self):
+        # TODO: Make updates
+        return
+
+    def kill(self):
+        Creature.creatureList.remove(self)
+        Creature.creatureGrid[self._pos] = 0
 
     @ property
     def x(self):
-        return self.pos[1]
+        return self._pos[0]
 
     @ property
     def y(self):
-        return self.pos[0]
+        return self._pos[1]
 
     def energyCost(self, path):
-        return np.linalg.norm(path) * self.radius
+        return np.linalg.norm(path) * self._radius
 
     # @ property 
     # def moveToPlant(self):
@@ -100,47 +109,55 @@ class Creature:
     # def replicationRate(self, p):
     #     self.parameters[4] = p
 
-    def died(self):
-        self.alive = False
-        Creature.number -= 1
-
-    def perception(self, x, y):
-        r = self.radius
-        perceptualField = self.grid[x-r : x+r+1, y-r : y+r+1]
+    def perceiveFood(self):
+        r = self._radius
+        perceptualField = self.foodGrid[self.x-r : self.x+r+1, self.y-r : self.y+r+1]
         locatedFood = np.argwhere(perceptualField)
+
+    # TODO: exclude self
+    def perceiveCreatures(self):
+        r = self._radius
+        perceptualField = self.creatureGrid[self.x-r : self.x+r+1, self.y-r : self.y+r+1]
+        locatedCreatures = np.argwhere(perceptualField)
     
     def moveRight(self, n):
-        self.pos += np.array((0,1))
+        self._pos += np.array((0,1))
     
     def moveLeft(self):
-        self.pos += np.array((0, -1))
+        self._pos += np.array((0, -1))
     
     def moveUp(self):
-        self.pos += np.array((-1,0))
+        self._pos += np.array((-1,0))
     
     def moveDown(self):
-        self.pos += np.array((1,0))
+        self._pos += np.array((1,0))
 
     def moveUpRight(self):
-        self.pos += np.array((-1, 1))
+        self._pos += np.array((-1, 1))
 
     def moveUpLeft(self):
-        self.pos += np.array((-1, -1))
+        self._pos += np.array((-1, -1))
 
     def moveDownRight(self):
-        self.pos += np.array((1, 1))
+        self._pos += np.array((1, 1))
 
     def moveDownLeft(self):
-        self.pos += np.array((1, -1))
+        self._pos += np.array((1, -1))
 
     def canMoveRight(self):
-        return self.pos[1] != self.maxPos
+        return self._pos[1] != Creature.N
 
     def canMoveLeft(self):
-        return self.pos[1] != 0
+        return self._pos[1] != 0
     
     def canMoveDown(self):
-        return self.pos[0] != self.maxPos
+        return self._pos[0] != Creature.N
     
     def canMoveUp(self):
-        return self.pos[0] != 0
+        return self._pos[0] != 0
+
+
+Creature.initAll(10, 0.1, 0.2)
+Creature.updateAll()
+
+print("Number of creatures: ", len(Creature.creatureList))
