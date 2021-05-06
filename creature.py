@@ -1,66 +1,14 @@
 import numpy as np
-from grid import Figure, Food
 from scipy.sparse import random
 
-class Creature(Figure):
-
-    # Creature params
-    genomThreshold = 0.2
-
-    creatureList = []
-    creatureGrid = np.array([],dtype=object)
-    foodGrid = np.array([],dtype=object)
-
-    rg = np.random.default_rng()
-
-    @staticmethod
-    def updateAll():
-        n = len(Creature.creatureList)
-        indices = np.linspace(0, n-1, num=n, dtype=int)
-        Creature.rg.shuffle(indices)
-
-        # Cannot be parallelized due to race condition issues
-        for index in indices:
-            Creature.creatureList[index].update()
-
-        return
-
-    @staticmethod
-    def initAll(N, creatureDensity, foodDensity):
-        Creature.N = N
-        Creature.creatureGrid = np.zeros((N,N), dtype=object)
-        Creature.foodGrid = np.zeros((N,N), dtype=object)
-
-        for i in range(N):
-            for j in range(N):
-                if (Creature.rg.random() < creatureDensity):
-                    Creature.creatureGrid[i,j] = Creature(np.array([i,j]), Creature.rg.random())
-
-                if (Creature.rg.random() < foodDensity):
-                    Creature.foodGrid[i,j] = Food()
-
-    @staticmethod
-    def plotAll(ax):
-        for creature in Creature.creatureList:
-            ax.scatter(creature.x, creature.y)
-
-        # Plot food
-        ax.imshow(Creature.foodGrid != 0)
-
-    def __init__(self, pos, radius):
-        super().__init__()
+class Figure(object):
+    def __init__(self, pos):
+        self._energy = 0.5
+        self._color = 'red'
         self._pos = pos
-        self._radius = radius
-        Creature.creatureList.append(self)
 
-    def update(self):
-        # TODO: Make updates
-        return
-
-    def kill(self):
-        Creature.creatureList.remove(self)
-        Creature.creatureGrid[self._pos] = 0
-
+    # Vectors to food objects are easier to calculate thus I did 
+    # include the position in the superclass
     @ property
     def x(self):
         return self._pos[0]
@@ -68,6 +16,43 @@ class Creature(Figure):
     @ property
     def y(self):
         return self._pos[1]
+
+    @ property
+    def energy(self):
+        return self._energy
+
+    @ property
+    def color(self):
+        return self._color
+
+    def update():
+        return
+
+class Food(Figure):
+    def __init__(self, pos):
+        super().__init__(pos)
+        self._color = 'green'
+
+class Creature(Figure):
+
+    # Creature params
+    genomThreshold = 0.2
+    perceptualFieldSize = 3
+    rg = np.random.default_rng()
+
+    def __init__(self, grid, pos, radius):
+        super().__init__(pos)
+        self._grid = grid
+        self._radius = radius
+        self._grid.creatureList.append(self)
+
+    def update(self):
+        foods = self.perceiveFood()
+        return
+
+    def kill(self):
+        self.grid.creatureList.remove(self)
+        self.grid.creatureGrid[self._pos] = 0
 
     def energyCost(self, path):
         return np.linalg.norm(path) * self._radius
@@ -113,14 +98,14 @@ class Creature(Figure):
     #     self.parameters[4] = p
 
     def perceiveFood(self):
-        r = self._radius
-        perceptualField = self.foodGrid[self.x-r : self.x+r+1, self.y-r : self.y+r+1]
+        r = perceptualFieldSize
+        perceptualField = self.grid.foodGrid[self.x-r : self.x+r+1, self.y-r : self.y+r+1]
         locatedFood = np.argwhere(perceptualField)
 
     # TODO: exclude self
     def perceiveCreatures(self):
-        r = self._radius
-        perceptualField = self.creatureGrid[self.x-r : self.x+r+1, self.y-r : self.y+r+1]
+        r = perceptualFieldSize
+        perceptualField = self.grid.creatureGrid[self.x-r : self.x+r+1, self.y-r : self.y+r+1]
         locatedCreatures = np.argwhere(perceptualField)
     
     def moveRight(self, n):
@@ -148,13 +133,13 @@ class Creature(Figure):
         self._pos += np.array((1, -1))
 
     def canMoveRight(self):
-        return self._pos[1] != Creature.N
+        return self._pos[1] != self.grid.N
 
     def canMoveLeft(self):
         return self._pos[1] != 0
     
     def canMoveDown(self):
-        return self._pos[0] != Creature.N
+        return self._pos[0] != self.grid.N
     
     def canMoveUp(self):
         return self._pos[0] != 0

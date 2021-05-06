@@ -1,13 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from creature import Creature
+from grid import Grid
 # Parameters
 NFRAMES = 1<<10
-SUBFRAMES = 200
-GRIDSIZE = 200
+SUBFRAMES = 1
+GRIDSIZE = 10
 
-Creature.initAll(GRIDSIZE, 0.01, 0.01)
+grid = Grid(GRIDSIZE, 0.1, 0.1)
+
+print("number of creatures: ", len(grid.creatureList))
 
 fig = plt.figure(constrained_layout=True)
 gs = fig.add_gridspec(1, 2)
@@ -20,13 +22,13 @@ def update(time):
     # For efficency do not draw every update
     for i in range(SUBFRAMES):
         iteration += 1
-        Creature.updateAll()
+        grid.updateAll()
 
     axLeft.clear()
     axLeft.set_xlim(0,GRIDSIZE)
     axLeft.set_ylim(0,GRIDSIZE)
     
-    Creature.plotAll(axLeft)
+    grid.plotAll(axLeft)
 
     print("current itartion number: ", iteration)
     return
