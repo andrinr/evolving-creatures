@@ -90,7 +90,7 @@ class CellDivision:
 
         return chr11, chr12, chr21, chr22
 
-    def __msutation(self):
+    def __mutation(self):
         pass
 
 
@@ -104,6 +104,3 @@ class Fertilisation:
     @ property
     def genome(self):
         return self.__genome
-
-
-

@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from evolution import Evolution
-
+from grid import Grid
+from creature import Creature
 # Parameters
 NFRAMES = 1<<10
 SUBFRAMES = 1
@@ -30,3 +31,6 @@ def update(time):
 animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=300, repeat=False)
 
 plt.show()
+
+
+
