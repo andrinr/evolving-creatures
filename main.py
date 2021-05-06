@@ -33,7 +33,7 @@ def update(time):
     print("current itartion number: ", iteration)
     return
 
-animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=10, repeat=False)
+animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=200, repeat=False)
 
 plt.show()
 

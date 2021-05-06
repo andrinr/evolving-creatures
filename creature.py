@@ -1,11 +1,12 @@
 import numpy as np
 from scipy.sparse import random
+from helpers import normalize, sRound
 
 class Figure(object):
     def __init__(self, pos):
         self._energy = 0.5
         self._color = 'red'
-        self._pos = pos
+        self._pos = np.array(pos)
 
     # Vectors to food objects are easier to calculate thus I did 
     # include the position in the superclass
@@ -16,6 +17,10 @@ class Figure(object):
     @ property
     def y(self):
         return self._pos[1]
+
+    @property
+    def gridIndex(self):
+        return (self.x, self.y)
 
     @ property
     def energy(self):
@@ -48,14 +53,27 @@ class Creature(Figure):
 
     def update(self):
         foods = self.perceiveFood()
+
+        if (len(foods) > 1):
+            vector = foods[0]
+            print(normalize(vector))
+            move = sRound(normalize(vector))
+            print("move: ", move)
+            self.move(move)
+
         return
 
     def kill(self):
         self.grid.creatureList.remove(self)
-        self.grid.creatureGrid[self._pos] = 0
+        self.grid.creatureGrid[self.gridIndex] = 0
 
     def energyCost(self, path):
         return np.linalg.norm(path) * self._radius
+
+    def move(self, vector):
+        self._grid.creatureGrid[self.gridIndex] = 0
+        self._pos = self._pos + vector
+        self._grid.creatureGrid[self.gridIndex] = self
 
     # @ property 
     # def moveToPlant(self):
@@ -98,15 +116,17 @@ class Creature(Figure):
     #     self.parameters[4] = p
 
     def perceiveFood(self):
-        r = perceptualFieldSize
-        perceptualField = self.grid.foodGrid[self.x-r : self.x+r+1, self.y-r : self.y+r+1]
-        locatedFood = np.argwhere(perceptualField)
+        r = Creature.perceptualFieldSize
+        x = int(self.x)
+        y = int(self.y)
+        perceptualField = self._grid.foodGrid[x-r : x+r+1, y-r : y+r+1]
+        return np.argwhere(perceptualField) - np.array([r,r])
 
     # TODO: exclude self
     def perceiveCreatures(self):
-        r = perceptualFieldSize
-        perceptualField = self.grid.creatureGrid[self.x-r : self.x+r+1, self.y-r : self.y+r+1]
-        locatedCreatures = np.argwhere(perceptualField)
+        r = Creature.perceptualFieldSize
+        perceptualField = self._grid.creatureGrid[self.x-r : self.x+r+1, self.y-r : self.y+r+1]
+        return np.argwhere(perceptualField)
     
     def moveRight(self, n):
         self._pos += np.array((0,1))

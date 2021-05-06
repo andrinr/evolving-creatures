@@ -14,11 +14,12 @@ class Grid:
 
         for i in range(N):
             for j in range(N):
+                pos = np.array([int(i), int(j)])
                 if (self.rg.random() < creatureDensity):
-                    self.creatureGrid[i,j] = Creature(self, np.array([i,j]), Creature.rg.random())
+                    self.creatureGrid[i,j] = Creature(self, [i,j], Creature.rg.random())
 
                 if (self.rg.random() < foodDensity):
-                    self.foodGrid[i,j] = Food(np.array([i,j]))
+                    self.foodGrid[i,j] = Food([i,j])
 
 
     def updateAll(self):
