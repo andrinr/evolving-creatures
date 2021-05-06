@@ -19,6 +19,7 @@ class Creature(Figure):
         indices = np.linspace(0, n-1, num=n, dtype=int)
         Creature.rg.shuffle(indices)
 
+        # Cannot be parallelized due to race condition issues
         for index in indices:
             Creature.creatureList[index].update()
 
@@ -51,7 +52,6 @@ class Creature(Figure):
         self._pos = pos
         self._radius = radius
         Creature.creatureList.append(self)
-        Creature.creatureGrid[self._pos] = self
 
     def update(self):
         # TODO: Make updates
@@ -158,9 +158,3 @@ class Creature(Figure):
     
     def canMoveUp(self):
         return self._pos[0] != 0
-
-
-Creature.initAll(10, 0.1, 0.2)
-Creature.updateAll()
-
-print("Number of creatures: ", len(Creature.creatureList))

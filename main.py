@@ -5,9 +5,9 @@ from creature import Creature
 # Parameters
 NFRAMES = 1<<10
 SUBFRAMES = 200
-GRIDSIZE = 50
+GRIDSIZE = 200
 
-Creature.initAll(GRIDSIZE, 0.1, 0.2)
+Creature.initAll(GRIDSIZE, 0.01, 0.01)
 
 fig = plt.figure(constrained_layout=True)
 gs = fig.add_gridspec(1, 2)
