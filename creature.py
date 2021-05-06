@@ -41,7 +41,11 @@ class Creature(Figure):
     @staticmethod
     def plotAll(ax):
         for creature in Creature.creatureList:
+            print(creature.color)
             ax.scatter(creature.x, creature.y)
+
+        # Plot food
+        ax.imshow(Creature.foodGrid != 0)
 
     def __init__(self, pos, radius):
         super().__init__()
