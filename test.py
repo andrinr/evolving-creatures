@@ -4,11 +4,10 @@ import matplotlib.pyplot as plt
 a = np.array([
     [0, 1, 0],
     [0, 0, 0],
-    [0, 1, 0]
+    [0, 1, -1]
 ])
 
-print(a[-1,1])
-print(np.argwhere(a[0:1,0:1]))
+print(np.argmin(a))
 
 ax = plt.subplot()
 
@@ -19,3 +18,4 @@ ax.scatter([0],[2])
 ax.imshow(a, origin='upper')
 
 plt.show()
+

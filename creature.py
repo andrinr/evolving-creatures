@@ -45,13 +45,14 @@ class Food(Figure):
 
 class Creature(Figure):
 
-    # Creature params
+    # Static
     genomThreshold = 0.2
     perceptualFieldSize = 2
+    costMatrix = np.zeros((perceptualFieldSize*2+1, perceptualFieldSize*2+1))
     rg = np.random.default_rng()
 
     # Used to associate each creature with an ID, NOT to keep track of total number of creatures
-    # Keeping track of all particles is done in the grid class
+    # Keeping track of all creatures is done in the grid class
     count = 0
 
     def __init__(self, grid, pos, radius):
@@ -60,27 +61,35 @@ class Creature(Figure):
         self._radius = radius
         self._grid.creatureList.append(self)
         self._id = Creature.count
+
+        # Assuming all creatures have the same perceptualFieldSize
+        # We calculate this here to save computing costs
+        if (Creature.count == 0):
+            for i in range(0, 2*Creature.perceptualFieldSize+1):
+                for j in range(0, 2*Creature.perceptualFieldSize+1):
+                    Creature.costMatrix[i,j] = np.linalg.norm(np.array([i-Creature.perceptualFieldSize,j-Creature.perceptualFieldSize]))
+
+            Creature.costMatrix[Creature.perceptualFieldSize, Creature.perceptualFieldSize] = 1
+
         Creature.count += 1
 
     def update(self):
-        foods = self.perceiveFood()
-        # If there is a piece of food within the perception field, move there
-        if (np.shape(foods)[0] > 0):
-            # Shuffle foods to avoid bias from same distanced food positions
-            Creature.rg.shuffle(foods)
-            closest = foods[np.argmin(np.linalg.norm(foods, axis=1))]
-            move = sRound(normalize(closest))
-            if (np.linalg.norm(move) == 0):
-                self.eat(self._pos + move)
-            else:
-                self.moveBy(move)
-        else:
-            # TODO: Creatures can move out of grid
-            move = Creature.rg.integers(-1, high=2, size=2)
-            self.moveBy(move)
+        foodCosts = -self.perceiveFood()
+        randomCosts = Creature.rg.random(np.shape(Creature.costMatrix))*0.1
+        topoCosts = self.perceptualField(self._grid.topography)
 
+        # TODO: get this working
+        #finalCosts = np.multiply(Creature.costMatrix, (foodCosts + randomCosts ))
+        finalCosts = foodCosts + randomCosts + topoCosts
 
-    def eat(self, pos):
+        target = np.unravel_index(finalCosts.argmin(), finalCosts.shape) - np.array([Creature.perceptualFieldSize,Creature.perceptualFieldSize])
+        move = sRound(normalize(target))
+        self.moveBy(move)
+
+        if (self._grid.foodGrid[self.gridIndex] != 0):
+            self.eat()
+
+    def eat(self):
         self._grid.foodGrid[self.gridIndex] = 0
 
     def kill(self):
@@ -156,8 +165,7 @@ class Creature(Figure):
         # Make sure self is counted as other creature
         fieldCreatures[r,r] = 0
         field = np.logical_and(fieldFood != 0, fieldCreatures == 0)
-        # Offset to have self centered coordinates
-        return np.argwhere(field.astype(int)) - np.array([r,r])
+        return field.astype(int)
 
     # TODO: exclude self
     def perceiveCreatures(self):
@@ -190,13 +198,13 @@ class Creature(Figure):
         self._pos += np.array((1, -1))
 
     def canMoveRight(self):
-        return self._pos[1] != self._grid.N
+        return self._pos[1] != self._grid.N + self._grid.ghostZone
 
     def canMoveLeft(self):
-        return self._pos[1] != 0
+        return self._pos[1] != self._grid.ghostZone
     
     def canMoveDown(self):
-        return self._pos[0] != self._grid.N
+        return self._pos[0] != self._grid.N + self._grid.ghostZone
     
     def canMoveUp(self):
-        return self._pos[0] != 0
+        return self._pos[0] != self._grid.ghostZone

@@ -12,6 +12,8 @@ class Grid:
         self.__rg =  np.random.default_rng()
         self.creatureGrid = np.zeros((N+Grid.ghostZone*2,N+Grid.ghostZone*2), dtype=object)
         self.foodGrid = np.zeros((N+Grid.ghostZone*2,N+Grid.ghostZone*2), dtype=object)
+        self.topography = np.full((N+Grid.ghostZone*2,N+Grid.ghostZone*2), 10000)
+        self.topography[Grid.ghostZone:N+Grid.ghostZone, Grid.ghostZone:N+Grid.ghostZone] = 1
 
         self.N = N
 
@@ -42,3 +44,5 @@ class Grid:
 
         # Plot food
         ax.imshow(self.foodGrid != 0, origin='upper')
+
+    
