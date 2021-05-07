@@ -80,7 +80,7 @@ class Creature(Figure):
 
         # TODO: get this working
         #finalCosts = np.multiply(Creature.costMatrix, (foodCosts + randomCosts ))
-        finalCosts = foodCosts + randomCosts + topoCosts
+        finalCosts = foodCosts + randomCosts + topoCosts + Creature.costMatrix*0.1
 
         target = np.unravel_index(finalCosts.argmin(), finalCosts.shape) - np.array([Creature.perceptualFieldSize,Creature.perceptualFieldSize])
         move = sRound(normalize(target))
