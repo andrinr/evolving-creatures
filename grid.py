@@ -4,18 +4,21 @@ from creature import Creature, Food
 
 class Grid:
 
+    ghostZone = 3
+
     def __init__(self, N, creatureDensity, foodDensity):
         self.creatureList = []
         self.__rg =  np.random.default_rng()
-        self.creatureGrid = np.zeros((N,N), dtype=object)
-        self.foodGrid = np.zeros((N,N), dtype=object)
+        self.creatureGrid = np.zeros((N+Grid.ghostZone*2,N+Grid.ghostZone*2), dtype=object)
+        self.foodGrid = np.zeros((N+Grid.ghostZone*2,N+Grid.ghostZone*2), dtype=object)
 
         self.N = N
 
-        for i in range(N):
-            for j in range(N):
+        for i in range(Grid.ghostZone, N+Grid.ghostZone):
+            for j in range(Grid.ghostZone, N+Grid.ghostZone):
+
                 if (self.__rg.random() < creatureDensity):
-                    self.creatureGrid[i,j] = Creature(self, [i,j], self.__rg.random())
+                    self.creatureGrid[i,j] = Creature(self, [i, j], self.__rg.random())
 
                 if (self.__rg.random() < foodDensity):
                     self.foodGrid[i,j] = Food([i,j])
@@ -33,8 +36,8 @@ class Grid:
         # Could be parallelized
         # mayube using numpy vectorize?
         for creature in self.creatureList:
-            ax.scatter(creature.x, creature.y)
-            ax.annotate(creature.id, (creature.x, creature.y), c="white")
+            ax.scatter(creature.y, creature.x)
+            ax.annotate(creature.id, (creature.y, creature.x), c="white")
 
         # Plot food
         ax.imshow(self.foodGrid != 0, origin='upper')

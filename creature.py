@@ -12,15 +12,15 @@ class Figure(object):
     # include the position in the superclass
     @ property
     def x(self):
-        return self._pos[1]
+        return self._pos[0]
 
     @ property
     def y(self):
-        return self._pos[0]
+        return self._pos[1]
 
     @property
     def gridIndex(self):
-        return (self.y, self.x)
+        return (self.x, self.y)
 
     @ property
     def energy(self):
@@ -42,7 +42,7 @@ class Creature(Figure):
 
     # Creature params
     genomThreshold = 0.2
-    perceptualFieldSize = 1
+    perceptualFieldSize = 2
     rg = np.random.default_rng()
 
     # Used to associate each creature with an ID, NOT to keep track of total number of creatures
@@ -58,15 +58,10 @@ class Creature(Figure):
         Creature.count += 1
 
     def update(self):
-        print("id: ", self.id, "pos: ", self._pos)
         foods = self.perceiveFood()
-
-        if (len(foods) > 1):
-            print("id: ", self.id, "sees: ", foods)
+        if (np.shape(foods)[0] > 0):
             closest = foods[np.argmin(np.linalg.norm(foods, axis=1))]
-            print(closest)
             move = sRound(normalize(closest))
-            print("id: ", self.id, "moves: ", move)
             self.moveBy(move)
 
     def kill(self):
@@ -129,12 +124,11 @@ class Creature(Figure):
     def perceiveFood(self):
         r = Creature.perceptualFieldSize
         # TODO: Why do we have to reverse coordinates here?
-        lx = max(self.x - r, 0)
-        ly = max(self.y - r, 0)
-        ux = min(self.x + r + 1, self._grid.N)
-        uy = min(self.y + r + 1, self._grid.N)
+        lx = self.x - r
+        ly = self.y - r
+        ux = self.x + r + 1
+        uy = self.y + r + 1
         perceptualField = self._grid.foodGrid[lx : ux, ly : uy]
-        print("id: ", self.id, "sourrounging: ", perceptualField != 0, "coord: ", self.x, self.y)
         return np.argwhere(perceptualField) - np.array([r,r])
 
     # TODO: exclude self
