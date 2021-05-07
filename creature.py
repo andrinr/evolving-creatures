@@ -42,7 +42,7 @@ class Creature(Figure):
 
     # Creature params
     genomThreshold = 0.2
-    perceptualFieldSize = 3
+    perceptualFieldSize = 1
     rg = np.random.default_rng()
 
     # Used to associate each creature with an ID, NOT to keep track of total number of creatures
@@ -80,6 +80,10 @@ class Creature(Figure):
         self._grid.creatureGrid[self.gridIndex] = 0
         self._pos = self._pos + vector
         self._grid.creatureGrid[self.gridIndex] = self
+
+    @ property
+    def id(self):
+        return self._id
 
     # @ property 
     # def moveToPlant(self):
@@ -121,15 +125,12 @@ class Creature(Figure):
     # def replicationRate(self, p):
     #     self.parameters[4] = p
 
-    @ property
-    def id(self):
-        return self._id
-
     def perceiveFood(self):
         r = Creature.perceptualFieldSize
         x = int(self.x)
         y = int(self.y)
         perceptualField = self._grid.foodGrid[x-r : x+r+1, y-r : y+r+1]
+        print("id: ", self.id, "sourrounging: ", perceptualField != 0, "coord: ", x, y)
         return np.argwhere(perceptualField) - np.array([r-1,r-1])
 
     # TODO: exclude self

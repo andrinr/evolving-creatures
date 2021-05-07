@@ -5,9 +5,9 @@ from grid import Grid
 # Parameters
 NFRAMES = 1
 SUBFRAMES = 1
-GRIDSIZE = 20
+GRIDSIZE = 10
 
-grid = Grid(GRIDSIZE, 0.02, 0.1)
+grid = Grid(GRIDSIZE, 0.06, 0.1)
 
 print("number of creatures: ", len(grid.creatureList))
 
@@ -25,8 +25,8 @@ def update(time):
         grid.updateAll()
 
     axLeft.clear()
-    axLeft.set_xlim(0,GRIDSIZE)
-    axLeft.set_ylim(0,GRIDSIZE)
+    axLeft.set_xlim(-1,GRIDSIZE)
+    axLeft.set_ylim(-1,GRIDSIZE)
     
     grid.plotAll(axLeft)
 
