@@ -8,8 +8,13 @@ class Figure(object):
         self._color = 'red'
         self._pos = np.array(pos)
 
-    # Vectors to food objects are easier to calculate thus I did 
-    # include the position in the superclass
+    def __mul__(self, value):
+        return self if value != 0 else 0
+
+    def __rmul__(self, value):
+        return self if value != 0 else 0
+
+    # Positions could proably be removed from superclass
     @ property
     def x(self):
         return self._pos[0]
@@ -59,10 +64,24 @@ class Creature(Figure):
 
     def update(self):
         foods = self.perceiveFood()
+        # If there is a piece of food within the perception field, move there
         if (np.shape(foods)[0] > 0):
+            # Shuffle foods to avoid bias from same distanced food positions
+            Creature.rg.shuffle(foods)
             closest = foods[np.argmin(np.linalg.norm(foods, axis=1))]
             move = sRound(normalize(closest))
+            if (np.linalg.norm(move) == 0):
+                self.eat(self._pos + move)
+            else:
+                self.moveBy(move)
+        else:
+            # TODO: Creatures can move out of grid
+            move = Creature.rg.integers(-1, high=2, size=2)
             self.moveBy(move)
+
+
+    def eat(self, pos):
+        self._grid.foodGrid[self.gridIndex] = 0
 
     def kill(self):
         self._grid.creatureList.remove(self)
@@ -121,21 +140,28 @@ class Creature(Figure):
     # def replicationRate(self, p):
     #     self.parameters[4] = p
 
-    def perceiveFood(self):
+    def perceptualField(self, grid):
         r = Creature.perceptualFieldSize
-        # TODO: Why do we have to reverse coordinates here?
         lx = self.x - r
         ly = self.y - r
         ux = self.x + r + 1
         uy = self.y + r + 1
-        perceptualField = self._grid.foodGrid[lx : ux, ly : uy]
-        return np.argwhere(perceptualField) - np.array([r,r])
+        return grid[lx : ux, ly : uy]
+
+    # Assuming: creature cannot perceive food when another creatures is located there
+    def perceiveFood(self):
+        r = Creature.perceptualFieldSize
+        fieldFood = self.perceptualField(self._grid.foodGrid)
+        fieldCreatures = self.perceptualField(self._grid.creatureGrid)
+        fieldCreatures[r,r] = 0
+        field = np.logical_and(fieldFood != 0, fieldCreatures == 0)
+        return np.argwhere(field.astype(int)) - np.array([r,r])
 
     # TODO: exclude self
     def perceiveCreatures(self):
         r = Creature.perceptualFieldSize
-        perceptualField = self._grid.creatureGrid[self.x-r : self.x+r+1, self.y-r : self.y+r+1]
-        return np.argwhere(perceptualField)
+        field = self.perceptualField(self._grid.foodGrid)
+        return np.argwhere(field) - np.array([r,r])
     
     def moveRight(self, n):
         self._pos += np.array((0,1))

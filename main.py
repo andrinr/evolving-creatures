@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from grid import Grid
 # Parameters
-NFRAMES = 10
+NFRAMES = 1000
 SUBFRAMES = 1
-GRIDSIZE = 10
+GRIDSIZE = 100
 
-grid = Grid(GRIDSIZE, 0.06, 0.1)
+grid = Grid(GRIDSIZE, 0.001, 0.1)
 
 print("number of creatures: ", len(grid.creatureList))
 
@@ -32,7 +32,7 @@ def update(time):
     print("current itartion number: ", iteration)
     return
 
-animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=2000, repeat=False)
+animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=100, repeat=False)
 
 plt.show()
 
