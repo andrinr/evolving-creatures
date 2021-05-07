@@ -12,15 +12,15 @@ class Figure(object):
     # include the position in the superclass
     @ property
     def x(self):
-        return self._pos[0]
+        return self._pos[1]
 
     @ property
     def y(self):
-        return self._pos[1]
+        return self._pos[0]
 
     @property
     def gridIndex(self):
-        return (self.x, self.y)
+        return (self.y, self.x)
 
     @ property
     def energy(self):
@@ -58,6 +58,7 @@ class Creature(Figure):
         Creature.count += 1
 
     def update(self):
+        print("id: ", self.id, "pos: ", self._pos)
         foods = self.perceiveFood()
 
         if (len(foods) > 1):
@@ -127,11 +128,14 @@ class Creature(Figure):
 
     def perceiveFood(self):
         r = Creature.perceptualFieldSize
-        x = int(self.x)
-        y = int(self.y)
-        perceptualField = self._grid.foodGrid[x-r : x+r+1, y-r : y+r+1]
-        print("id: ", self.id, "sourrounging: ", perceptualField != 0, "coord: ", x, y)
-        return np.argwhere(perceptualField) - np.array([r-1,r-1])
+        # TODO: Why do we have to reverse coordinates here?
+        lx = max(self.x - r, 0)
+        ly = max(self.y - r, 0)
+        ux = min(self.x + r + 1, self._grid.N)
+        uy = min(self.y + r + 1, self._grid.N)
+        perceptualField = self._grid.foodGrid[lx : ux, ly : uy]
+        print("id: ", self.id, "sourrounging: ", perceptualField != 0, "coord: ", self.x, self.y)
+        return np.argwhere(perceptualField) - np.array([r,r])
 
     # TODO: exclude self
     def perceiveCreatures(self):

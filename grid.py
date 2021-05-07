@@ -37,4 +37,4 @@ class Grid:
             ax.annotate(creature.id, (creature.x, creature.y), c="white")
 
         # Plot food
-        ax.imshow(np.flip(self.foodGrid,0) != 0, origin='upper')
+        ax.imshow(self.foodGrid != 0, origin='upper')
