@@ -20,3 +20,7 @@ def normalize(v):
     if norm == 0: 
         return v
     return v / norm
+
+def closestPoint(arr, pos):
+    dist = (arr[:, 0] - pos[0])**2 + (arr[:, 1] - pos[1])**2
+    return arr[dist.argmin()]

@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.sparse import random
-from helpers import normalize, sRound
+from helpers import normalize, sRound, closestPoint
 
 class Figure(object):
     def __init__(self, pos):
@@ -30,7 +30,7 @@ class Figure(object):
     def color(self):
         return self._color
 
-    def update():
+    def update(self):
         return
 
 class Food(Figure):
@@ -45,32 +45,38 @@ class Creature(Figure):
     perceptualFieldSize = 3
     rg = np.random.default_rng()
 
+    # Used to associate each creature with an ID, NOT to keep track of total number of creatures
+    # Keeping track of all particles is done in the grid class
+    count = 0
+
     def __init__(self, grid, pos, radius):
         super().__init__(pos)
         self._grid = grid
         self._radius = radius
         self._grid.creatureList.append(self)
+        self._id = Creature.count
+        Creature.count += 1
 
     def update(self):
         foods = self.perceiveFood()
 
         if (len(foods) > 1):
-            vector = foods[0]
-            print(normalize(vector))
-            move = sRound(normalize(vector))
-            print("move: ", move)
-            self.move(move)
-
-        return
+            print("id: ", self.id, "sees: ", foods)
+            closest = foods[np.argmin(np.linalg.norm(foods, axis=1))]
+            print(closest)
+            move = sRound(normalize(closest))
+            print("id: ", self.id, "moves: ", move)
+            self.moveBy(move)
 
     def kill(self):
-        self.grid.creatureList.remove(self)
-        self.grid.creatureGrid[self.gridIndex] = 0
+        self._grid.creatureList.remove(self)
+        self._grid.creatureGrid[self.gridIndex] = 0
 
     def energyCost(self, path):
         return np.linalg.norm(path) * self._radius
 
-    def move(self, vector):
+    # Move self and update grid data structure
+    def moveBy(self, vector):
         self._grid.creatureGrid[self.gridIndex] = 0
         self._pos = self._pos + vector
         self._grid.creatureGrid[self.gridIndex] = self
@@ -115,12 +121,16 @@ class Creature(Figure):
     # def replicationRate(self, p):
     #     self.parameters[4] = p
 
+    @ property
+    def id(self):
+        return self._id
+
     def perceiveFood(self):
         r = Creature.perceptualFieldSize
         x = int(self.x)
         y = int(self.y)
         perceptualField = self._grid.foodGrid[x-r : x+r+1, y-r : y+r+1]
-        return np.argwhere(perceptualField) - np.array([r,r])
+        return np.argwhere(perceptualField) - np.array([r-1,r-1])
 
     # TODO: exclude self
     def perceiveCreatures(self):
@@ -153,13 +163,13 @@ class Creature(Figure):
         self._pos += np.array((1, -1))
 
     def canMoveRight(self):
-        return self._pos[1] != self.grid.N
+        return self._pos[1] != self._grid.N
 
     def canMoveLeft(self):
         return self._pos[1] != 0
     
     def canMoveDown(self):
-        return self._pos[0] != self.grid.N
+        return self._pos[0] != self._grid.N
     
     def canMoveUp(self):
         return self._pos[0] != 0

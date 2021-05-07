@@ -3,23 +3,23 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from grid import Grid
 # Parameters
-NFRAMES = 1<<10
+NFRAMES = 1
 SUBFRAMES = 1
-GRIDSIZE = 10
+GRIDSIZE = 20
 
-grid = Grid(GRIDSIZE, 0.1, 0.1)
+grid = Grid(GRIDSIZE, 0.02, 0.1)
 
 print("number of creatures: ", len(grid.creatureList))
 
 fig = plt.figure(constrained_layout=True)
-gs = fig.add_gridspec(1, 2)
-axLeft = fig.add_subplot(gs[:,0])
-axRight = fig.add_subplot(gs[:,1])
+gs = fig.add_gridspec(1, 3)
+axLeft = fig.add_subplot(gs[:,0:2])
+axRight = fig.add_subplot(gs[:,2])
 
 iteration = 0
 def update(time):
     global iteration
-    # For efficency do not draw every update
+    # For efficency do not plot every update
     for i in range(SUBFRAMES):
         iteration += 1
         grid.updateAll()
@@ -33,7 +33,7 @@ def update(time):
     print("current itartion number: ", iteration)
     return
 
-animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=200, repeat=False)
+animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=2000, repeat=False)
 
 plt.show()
 

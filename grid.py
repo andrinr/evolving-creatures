@@ -6,7 +6,7 @@ class Grid:
 
     def __init__(self, N, creatureDensity, foodDensity):
         self.creatureList = []
-        self.rg =  np.random.default_rng()
+        self.__rg =  np.random.default_rng()
         self.creatureGrid = np.zeros((N,N), dtype=object)
         self.foodGrid = np.zeros((N,N), dtype=object)
 
@@ -14,31 +14,27 @@ class Grid:
 
         for i in range(N):
             for j in range(N):
-                pos = np.array([int(i), int(j)])
-                if (self.rg.random() < creatureDensity):
-                    self.creatureGrid[i,j] = Creature(self, [i,j], Creature.rg.random())
+                if (self.__rg.random() < creatureDensity):
+                    self.creatureGrid[i,j] = Creature(self, [i,j], self.__rg.random())
 
-                if (self.rg.random() < foodDensity):
+                if (self.__rg.random() < foodDensity):
                     self.foodGrid[i,j] = Food([i,j])
-
 
     def updateAll(self):
         n = len(self.creatureList)
         indices = np.linspace(0, n-1, num=n, dtype=int)
-        self.rg.shuffle(indices)
+        self.__rg.shuffle(indices)
 
         # Cannot be parallelized due to race condition issues
         for index in indices:
             self.creatureList[index].update()
-
-        return
 
     def plotAll(self, ax):
         # Could be parallelized
         # mayube using numpy vectorize?
         for creature in self.creatureList:
             ax.scatter(creature.x, creature.y)
+            ax.annotate(creature.id, (creature.x, creature.y), c="white")
 
         # Plot food
         ax.imshow(self.foodGrid != 0)
-     
