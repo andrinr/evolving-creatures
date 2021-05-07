@@ -4,7 +4,8 @@ from creature import Creature, Food
 
 class Grid:
 
-    ghostZone = 3
+    #Ghost zone should be bigger than Creature.perceptionFieldSize
+    ghostZone = 10
 
     def __init__(self, N, creatureDensity, foodDensity):
         self.creatureList = []

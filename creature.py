@@ -153,8 +153,10 @@ class Creature(Figure):
         r = Creature.perceptualFieldSize
         fieldFood = self.perceptualField(self._grid.foodGrid)
         fieldCreatures = self.perceptualField(self._grid.creatureGrid)
+        # Make sure self is counted as other creature
         fieldCreatures[r,r] = 0
         field = np.logical_and(fieldFood != 0, fieldCreatures == 0)
+        # Offset to have self centered coordinates
         return np.argwhere(field.astype(int)) - np.array([r,r])
 
     # TODO: exclude self
