@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from grid import Grid
 # Parameters
-NFRAMES = 1000
-SUBFRAMES = 1
+NFRAMES = 100
+SUBFRAMES = 10
 GRIDSIZE = 100
 
 grid = Grid(GRIDSIZE, 0.001, 0.1)

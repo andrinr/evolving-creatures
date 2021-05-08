@@ -1,5 +1,6 @@
 import numpy as np
-from scipy.sparse import random
+import random
+# from scipy.sparse import random
 from creature import Creature, Food
 
 class Grid:
@@ -27,13 +28,10 @@ class Grid:
                     self.foodGrid[i,j] = Food([i,j])
 
     def updateAll(self):
-        n = len(self.creatureList)
-        indices = np.linspace(0, n-1, num=n, dtype=int)
-        self.__rg.shuffle(indices)
-
         # Cannot be parallelized due to race condition issues
-        for index in indices:
-            self.creatureList[index].update()
+        random.shuffle(self.creatureList)
+        for creature in self.creatureList:
+            creature.update()
 
     def plotAll(self, ax):
         # Could be parallelized
