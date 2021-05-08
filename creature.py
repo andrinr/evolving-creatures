@@ -47,7 +47,7 @@ class Creature(Figure):
 
     # Static
     genomThreshold = 0.2
-    perceptualFieldSize = 2
+    perceptualFieldSize = 4
     costMatrix = np.zeros((perceptualFieldSize*2+1, perceptualFieldSize*2+1))
     rg = np.random.default_rng()
 
