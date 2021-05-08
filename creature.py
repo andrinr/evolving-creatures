@@ -82,7 +82,7 @@ class Creature(Figure):
     def update(self):
         foodCosts = -self.perceiveFood()
         creatureCosts = self.perceiveCreatures()
-        randomCosts = self.rg.random(np.shape(self.distanceCosts)) * 0.1
+        randomCosts = self.rg.random(np.shape(self.distanceCosts)) * 0.02
         topoCosts = self.perceptualField(self._grid.topography)
         scent = self.perceptualField(self._grid.scent)
         #finalCosts = np.multiply(Creature.costMatrix, (foodCosts + randomCosts ))
@@ -100,20 +100,18 @@ class Creature(Figure):
         # Die cost matrix wird geblurt und nacher das minimum gesucht. So kann verindert werden, dass sich eine Creatur in die nähe eines Feindes bewegt,
         # Weil daneben essen liegt
 
-
-        finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + scent + self.distanceCosts
-        finalCosts = gaussian_filter(finalCosts, sigma=0.2, mode="nearest")
-
-        finalCosts[self.perceptualFieldSize, self.perceptualFieldSize] = 2
-
         # Blur matrix to avoid creature from moving to food next to a threat
-
+        creatureCosts = gaussian_filter(creatureCosts, sigma=0.5, mode="nearest")
+        finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + scent + self.distanceCosts
+        # Avoid staying at the same place
+        finalCosts[self.perceptualFieldSize, self.perceptualFieldSize] = 2
+        # Store final costs for plotting
         self.finalCosts = finalCosts
 
         target = np.unravel_index(finalCosts.argmin(), finalCosts.shape) - np.array([Creature.perceptualFieldSize, self.perceptualFieldSize])
         move = sRound(normalize(target))
         self.moveBy(move)
-        self._grid.scent[self.gridIndex] += 1
+        self._grid.scent[self.gridIndex] += 0.3
 
         if self._grid.foodGrid[self.gridIndex]:
             self.eat()
@@ -169,42 +167,6 @@ class Creature(Figure):
         fieldCreatures = self.perceptualField(self._grid.creatureGrid) != 0
         # Make sure self is counted as other creature
         return fieldCreatures.astype(int)
-    
-    def moveRight(self, n):
-        self._pos += np.array((0,1))
-    
-    def moveLeft(self):
-        self._pos += np.array((0, -1))
-    
-    def moveUp(self):
-        self._pos += np.array((-1,0))
-    
-    def moveDown(self):
-        self._pos += np.array((1,0))
-
-    def moveUpRight(self):
-        self._pos += np.array((-1, 1))
-
-    def moveUpLeft(self):
-        self._pos += np.array((-1, -1))
-
-    def moveDownRight(self):
-        self._pos += np.array((1, 1))
-
-    def moveDownLeft(self):
-        self._pos += np.array((1, -1))
-
-    def canMoveRight(self):
-        return self._pos[1] != self._grid.N + self._grid.ghostZone
-
-    def canMoveLeft(self):
-        return self._pos[1] != self._grid.ghostZone
-    
-    def canMoveDown(self):
-        return self._pos[0] != self._grid.N + self._grid.ghostZone
-    
-    def canMoveUp(self):
-        return self._pos[0] != self._grid.ghostZone
 
     # @ property 
     # def moveToPlant(self):

@@ -4,10 +4,10 @@ from matplotlib.animation import FuncAnimation
 from grid import Grid
 # Parameters
 NFRAMES = 1000
-SUBFRAMES = 1
+SUBFRAMES = 10
 GRIDSIZE = 100
 
-grid = Grid(GRIDSIZE, 0.01, 0.1)
+grid = Grid(GRIDSIZE, 0.001, 0.1)
 
 print("number of creatures: ", len(grid.creatureList))
 
