@@ -1,6 +1,7 @@
 import numpy as np
 # from scipy.sparse import random
 from helpers import normalize, sRound, closestPoint
+from scipy.ndimage import gaussian_filter
 
 class Figure(object):
 
@@ -52,7 +53,7 @@ class Creature(Figure):
     maxMoves = 10
     genomThreshold = 0.2
     perceptualFieldSize = 4
-    costMatrix = np.zeros((perceptualFieldSize*2+1, perceptualFieldSize*2+1))
+    distanceCosts = np.zeros((perceptualFieldSize*2+1, perceptualFieldSize*2+1))
     rg = np.random.default_rng()
 
     # Used to associate each creature with an ID, NOT to keep track of total number of creatures
@@ -71,29 +72,48 @@ class Creature(Figure):
         if self.count == 0:
             for i in range(2 * self.perceptualFieldSize + 1):
                 for j in range(2 * self.perceptualFieldSize + 1):
-                    self.costMatrix[i,j] = np.linalg.norm(np.array([i - self.perceptualFieldSize, j - self.perceptualFieldSize]))
-
-            self.costMatrix[self.perceptualFieldSize, self.perceptualFieldSize] = 1
+                    self.distanceCosts[i,j] = np.linalg.norm(np.array([i - self.perceptualFieldSize, j - self.perceptualFieldSize]))
+            
+            # Normalize
+            self.distanceCosts /= np.linalg.norm(np.array([self.perceptualFieldSize, self.perceptualFieldSize]))
 
         Creature.count += 1
 
     def update(self):
         foodCosts = -self.perceiveFood()
-        randomCosts = self.rg.random(np.shape(self.costMatrix)) * 0.1
+        creatureCosts = self.perceiveCreatures()
+        randomCosts = self.rg.random(np.shape(self.distanceCosts)) * 0.1
         topoCosts = self.perceptualField(self._grid.topography)
-        # TODO: get this working
+        scent = self.perceptualField(self._grid.scent)
         #finalCosts = np.multiply(Creature.costMatrix, (foodCosts + randomCosts ))
         
         # Wird randomCosts für random moves benutzt? falls ja, ev. besser wir individualisieren die Bewegungen.
         # foodcosts + costmatrix kann dazuführen, dass es günstiger ist, sich an einen andere Ort zu bewegen als direkt zum food. 
         # Die Idee ist genial, aber muss noch gut durchdacht werden, vorallem weil wir später noch Predators hinzufügen. Wie entscheidet sie, 
         # ob sie nun zum food läuft, davonläuft oder angreift? 
+        
+        # Antwort:
+        # Die randomCosts werden für zufällige Bewegungen genutzt wenn keine anderen Objekte in der Nähe sind
+        # Die randomCosts können mit einem sehr kleinen Faktor multipliziert werden, somit kann verhindert werden dass dumme entscheidungen getroffen werden
 
-        finalCosts = foodCosts + randomCosts + topoCosts + self.costMatrix*0.1
+        # Objekte denen man sich annähern soll haben ein negatives gewicht, objekte von denen man sich entfernen soll ein positives gewicht
+        # Die cost matrix wird geblurt und nacher das minimum gesucht. So kann verindert werden, dass sich eine Creatur in die nähe eines Feindes bewegt,
+        # Weil daneben essen liegt
+
+
+        finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + scent + self.distanceCosts
+        finalCosts = gaussian_filter(finalCosts, sigma=0.2, mode="nearest")
+
+        finalCosts[self.perceptualFieldSize, self.perceptualFieldSize] = 2
+
+        # Blur matrix to avoid creature from moving to food next to a threat
+
+        self.finalCosts = finalCosts
 
         target = np.unravel_index(finalCosts.argmin(), finalCosts.shape) - np.array([Creature.perceptualFieldSize, self.perceptualFieldSize])
         move = sRound(normalize(target))
         self.moveBy(move)
+        self._grid.scent[self.gridIndex] += 1
 
         if self._grid.foodGrid[self.gridIndex]:
             self.eat()
@@ -145,9 +165,10 @@ class Creature(Figure):
 
     # TODO: exclude self
     def perceiveCreatures(self):
-        r = Creature.perceptualFieldSize
-        field = self.perceptualField(self._grid.foodGrid)
-        return np.argwhere(field) - np.array([r,r])
+        r = self.perceptualFieldSize
+        fieldCreatures = self.perceptualField(self._grid.creatureGrid) != 0
+        # Make sure self is counted as other creature
+        return fieldCreatures.astype(int)
     
     def moveRight(self, n):
         self._pos += np.array((0,1))
