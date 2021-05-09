@@ -10,12 +10,6 @@ class Figure(object):
         self._energy = 0
         self._pos = np.array(pos)
 
-    def __mul__(self, value):
-        return self if value != 0 else 0
-
-    def __rmul__(self, value):
-        return self if value != 0 else 0
-
     # Positions could proably be removed from superclass
     @ property
     def x(self):
@@ -60,10 +54,11 @@ class Creature(Figure):
     # Keeping track of all creatures is done in the grid class
     count = 0
 
-    def __init__(self, grid, pos, radius):
+    def __init__(self, grid, pos, radius, genome=rg.random(5)):
         super().__init__(pos)
         self._grid = grid
         self._radius = radius
+        self._genome = genome
         self._grid.creatureList.append(self)
         self._id = Creature.count
         self._energy = 1
@@ -84,7 +79,7 @@ class Creature(Figure):
         creatureCosts = self.perceiveCreatures()
         randomCosts = self.rg.random(np.shape(self.distanceCosts)) * 0.02
         topoCosts = self.perceptualField(self._grid.topography)
-        scent = self.perceptualField(self._grid.scent)
+        scentCosts = self.perceptualField(self._grid.scent)
         #finalCosts = np.multiply(Creature.costMatrix, (foodCosts + randomCosts ))
         
         # Wird randomCosts für random moves benutzt? falls ja, ev. besser wir individualisieren die Bewegungen.
@@ -102,13 +97,13 @@ class Creature(Figure):
 
         # Blur matrix to avoid creature from moving to food next to a threat
         creatureCosts = gaussian_filter(creatureCosts, sigma=0.5, mode="nearest")
-        finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + scent + self.distanceCosts
+        finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + scentCosts + self.distanceCosts
         # Avoid staying at the same place
         finalCosts[self.perceptualFieldSize, self.perceptualFieldSize] = 2
         # Store final costs for plotting
         self.finalCosts = finalCosts
 
-        target = np.unravel_index(finalCosts.argmin(), finalCosts.shape) - np.array([Creature.perceptualFieldSize, self.perceptualFieldSize])
+        target = np.unravel_index(finalCosts.argmin(), finalCosts.shape) - np.array([self.perceptualFieldSize, self.perceptualFieldSize])
         move = sRound(normalize(target))
         self.moveBy(move)
         self._grid.scent[self.gridIndex] += 0.3
@@ -162,48 +157,78 @@ class Creature(Figure):
         return field.astype(int)
 
     # TODO: exclude self
-    def perceiveCreatures(self):
-        r = self.perceptualFieldSize
+    def perceiveEnemies(self):
+        field = self.perceptualField(self._grid.creatureGrid)
+        fieldCreatures = field != 0
+
+        def distance(a):
+            if a != 0:  
+                print(a)
+                return np.linalg.norm(a.genome, self.genome, ord='fro')
+            else:
+                return 1000
+        
+        vfunc = np.vectorize(distance)
+        #print(vfunc(field))
+
+        #enmemyCreatures = np.logical_and(distance(field) > self.genomThreshold, fieldCreatures)
+
+        #print(enemyCreatures)
+        # Make sure self is counted as other creature
+        return fieldCreatures.astype(int)
+
+    # TODO: exclude self
+    def perceiveFriends(self):
         fieldCreatures = self.perceptualField(self._grid.creatureGrid) != 0
         # Make sure self is counted as other creature
         return fieldCreatures.astype(int)
 
-    # @ property 
-    # def moveToPlant(self):
-    #     return self.paramters[0]
+    # TODO: exclude self
+    def perceiveCreatures(self):
+        fieldCreatures = self.perceptualField(self._grid.creatureGrid) != 0
+        # Make sure self is counted as other creature
+        return fieldCreatures.astype(int)
 
-    # @ property 
-    # def moveToEnemy(self):
-    #     return self.paramters[1]
+    @ property 
+    def genome(self):
+         return self._genome
 
-    # @ property 
-    # def moveToFriend(self):
-    #     return self.paramters[2]
+    @ property 
+    def moveToPlant(self):
+         return self._genome[0]
 
-    # @ property
-    # def deathRate(self):
-    #     return self.parameters[3]
+    @ property 
+    def moveToEnemy(self):
+        return self._genome[1]
 
-    # @ property
-    # def replicationRate(self):
-    #     return self.parameters[4]
+    @ property 
+    def moveToFriend(self):
+        return self._genome[2]
 
-    # @ moveToPlant.setter
-    # def moveToPlant(self, p):
-    #     self.parameters[0] = p
+    @ property
+    def deathRate(self):
+        return self._genome[3]
 
-    # @ moveToEnemy.setter
-    # def moveToEnemy(self, p):
-    #     self.parameters[1] = p
+    @ property
+    def replicationRate(self):
+        return self._genome[4]
 
-    # @ moveToFriend.setter
-    # def moveToFriend(self, p):
-    #     self.parameters[2] = p
+    @ moveToPlant.setter
+    def moveToPlant(self, p):
+        self._genome[0] = p
 
-    # @ deathRate.setter
-    # def deathRate(self, p):
-    #     self.parameters[3] = p
+    @ moveToEnemy.setter
+    def moveToEnemy(self, p):
+        self._genome[1] = p
 
-    # @ replicationRate.setter
-    # def replicationRate(self, p):
-    #     self.parameters[4] = p
+    @ moveToFriend.setter
+    def moveToFriend(self, p):
+        self._genome[2] = p
+
+    @ deathRate.setter
+    def deathRate(self, p):
+        self._genome[3] = p
+
+    @ replicationRate.setter
+    def replicationRate(self, p):
+        self._genome[4] = p
