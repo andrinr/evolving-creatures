@@ -12,7 +12,9 @@ class Grid:
         self.creatureList = []
         self.__rg =  np.random.default_rng()
         self.creatureGrid = np.zeros((N+Grid.ghostZone*2,N+Grid.ghostZone*2), dtype=object)
-        self.foodGrid = np.zeros((N+Grid.ghostZone*2,N+Grid.ghostZone*2), dtype=object)
+
+        self.foodGrid = (self.__rg.random((N+Grid.ghostZone*2,N+Grid.ghostZone*2)).astype(float) < foodDensity) * Food()
+
         self.topography = np.full((N+Grid.ghostZone*2,N+Grid.ghostZone*2), 10)
         self.topography[Grid.ghostZone-1:N+Grid.ghostZone+1, Grid.ghostZone:N-1+Grid.ghostZone+1] = 1
         self.topography[Grid.ghostZone:N+Grid.ghostZone, Grid.ghostZone:N+Grid.ghostZone] = 0
@@ -28,8 +30,6 @@ class Grid:
                 if (self.__rg.random() < creatureDensity):
                     self.creatureGrid[i,j] = Creature(self, [i, j], self.__rg.random())
 
-                if (self.__rg.random() < foodDensity):
-                    self.foodGrid[i,j] = Food([i,j])
 
     def updateAll(self):
         self.scent *= 0.9
