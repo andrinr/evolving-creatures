@@ -42,7 +42,6 @@ class Food(Figure):
         self._energy = 1
 
 class Creature(Figure):
-
     # Static
     maxMoves = 10
     genomThreshold = 0.2
