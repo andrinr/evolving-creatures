@@ -2,6 +2,7 @@ import numpy as np
 import random
 # from scipy.sparse import random
 from creature import Creature, Food
+from itertools import product
 
 class Grid:
 
@@ -24,11 +25,9 @@ class Grid:
 
         self.N = N
 
-        for i in range(Grid.ghostZone, N+Grid.ghostZone):
-            for j in range(Grid.ghostZone, N+Grid.ghostZone):
-
-                if (self.__rg.random() < creatureDensity):
-                    self.creatureGrid[i,j] = Creature(self, [i, j], self.__rg.random())
+        for i, j in product(range(Grid.ghostZone, N+Grid.ghostZone), range(Grid.ghostZone, N+Grid.ghostZone)):
+            if (self.__rg.random() < creatureDensity):
+                self.creatureGrid[i,j] = Creature(self, [i, j], self.__rg.random())
 
 
     def updateAll(self):
