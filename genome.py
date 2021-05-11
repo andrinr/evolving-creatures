@@ -1,11 +1,20 @@
 import numpy as np
+from random import choice
 
 
 class Allele:
 
-    def __init__(self, dominance, val):
+    def __init__(self, dominance, val, description):
         self.__dominant = dominance # bool
         self.__value = val
+        self.__description = description
+
+    def __str__(self):
+        return self.__description
+
+    @ property
+    def description(self):
+        return self.__description
 
     @ property
     def dominant(self):
@@ -17,12 +26,33 @@ class Allele:
 
 
 class Gene:
-    
-    def __init__(self, alleleF, alleleM):
+
+    def __init__(self, alleleM, alleleF, name):
         self.__alleleF = alleleF
         self.__alleleM = alleleM
         self.__value = 0
+        self.__phenotype = ''
+        self.__name = name
         self.__getPhen()
+    
+    def __str__(self):
+        return 'Gene Nr.:{}\nPhenotype: {}\n alleleM: {}\n alleleF: {}'.format(self.name, 
+                                                                               self.__phenotype, 
+                                                                               self.__alleleM,
+                                                                               self.__alleleF)
+
+    def __getPhen(self):
+        if self.__alleleF.dominant == self.__alleleM.dominant:
+            self.__value = .5 * (self.__alleleF.value + self.__alleleM.value)  # or better max, min??
+            self.__phenotype = self.__alleleM.description
+
+        elif self.__alleleF.dominant:
+            self.__value = self.__alleleF.value
+            self.__phenotype = self.__alleleF.description
+
+        else:
+            self.__value = self.__alleleM.value
+            self.__phenotype = self.__alleleM.description
 
     @ property
     def alleleF(self):
@@ -33,32 +63,59 @@ class Gene:
         return self.__alleleM
 
     @ property
+    def name(self):
+        return self.__name
+
+    @ property
+    def phenotype(self):
+        return self.__phenotype
+
+    @ property
     def value(self):
         return self.__value
-
-    def __getPhen(self):
-        if self.__alleleF.dominant == self.__alleleM.dominant:
-            self.__value = .5 * (self.__alleleF.value + self.__alleleM.value)  # or better max, min??
-        elif self.__alleleF.dominant:
-            self.__value = self.__alleleF.value
-        else:
-            self.__value = self.__alleleM.value
 
 
 class Genome:
 
-    def __init__(self, genes):
-        self.__genes = genes
-        self.__n = len(genes)
+    # {name of Gene1: ((phenotype1, dominance), (phenotype2, dominance)), ...}
+    phenotypes = {'gene1':[['predator', False], ['prey',True]],
+                  'gene2':[['sizeM', True],['sizeL', False]],
+                  'gene3':[['pFSizeM', False], ['pfSizeL', True]], 
+                  'gene4':[['aggressive', False], ['peaceful', True]]}
+
+    def __init__(self, genes=None, replication=False):
+        # if we build a genome because of a replication we get the genes from the 
+        # fertilisation otherwise we need am empty list.
+        self.__genes = genes or []
+        if not replication:
+            self.randomGenes()
+        self.__n = len(self.__genes)
+
+    def randomGenes(self):
+        for name, types in self.phenotypes.items():
+            alleles = []
+            for _ in (1,2):
+                phene = choice(types)
+                # dominant alleles receive a positive random value in [0,1]
+                if phene[1]:
+                    alleles.append(Allele(phene[1], np.random.random(), phene[0]))
+                # rezessive alleles treceive a negative random value
+                else:
+                    alleles.append(Allele(phene[1], -np.random.random(), phene[0]))
+            self.__genes.append(Gene(alleles[0], alleles[1], name))
 
     @ property
     def genes(self):
-        return self.__genes
+        keys = ['enemy', 'size', 'pfSize', 'aggression']
+        return dict(zip(keys, self.__genes))
 
     @ property
     def n(self):
         return self.__n
 
+# =============================================================================
+# Replicfation
+# =============================================================================
 
 class CellDivision:
 
