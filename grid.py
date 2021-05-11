@@ -13,11 +13,11 @@ class Grid:
     def __init__(self, N, creatureDensity, initFoodDensity, dtfoodDenstiy):
         self.creatureList = []
         self.__rg =  np.random.default_rng()
+
+        self.dtfoodDensity = dtfoodDenstiy
+        self.foodGrid = (self.__rg.random((N+self.ghostZone*2, N+self.ghostZone*2)).astype(float) < initFoodDensity).astype(int) * Food()
+
         self.creatureGrid = np.zeros_like(self.foodGrid, dtype=object)
-
-        
-        self.foodGrid = (self.__rg.random(np.shape(self.creatureGrid)).astype(float) < initFoodDensity).astype(int) * Food()
-
 
         self.topography = np.full_like(self.foodGrid, 10, dtype=float)
         self.topography[Grid.ghostZone-1:N+Grid.ghostZone+1, Grid.ghostZone:N-1+Grid.ghostZone+1] = 1
