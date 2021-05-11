@@ -13,10 +13,10 @@ class Grid:
     def __init__(self, N, creatureDensity, initFoodDensity, dtfoodDenstiy):
         self.creatureList = []
         self.__rg =  np.random.default_rng()
-        self.creatureGrid = np.zeros((N+Grid.ghostZone*2,N+Grid.ghostZone*2), dtype=object)
 
         self.foodGrid = (self.__rg.random(np.shape(self.creatureGrid)).astype(float) < initFoodDensity).astype(int) * Food()
 
+<<<<<<< HEAD
         self.dtfoodDensity = dtfoodDenstiy
 
         self.topography = np.full_like(self.creatureGrid, 10)
@@ -24,6 +24,16 @@ class Grid:
 
         # Each creature leave behind a scent, avoids creature to make repetitive moves
         self.scent = np.zeros_like(self.creatureGrid)
+=======
+        self.creatureGrid = np.zeros_like(self.foodGrid, dtype=object)
+
+        self.topography = np.full_like(self.foodGrid, 10, dtype=float)
+        self.topography[Grid.ghostZone-1:N+Grid.ghostZone+1, Grid.ghostZone:N-1+Grid.ghostZone+1] = 1
+        self.topography[Grid.ghostZone:N+Grid.ghostZone, Grid.ghostZone:N+Grid.ghostZone] = 0
+
+        # Each creature leave behind a scent, avoids creature to make repetitive moves
+        self.scent = np.zeros_like(self.foodGrid, dtype=float)
+>>>>>>> a72d6456b26d1bfffe5956ab334e938b71b9baa7
 
         self.N = N
 

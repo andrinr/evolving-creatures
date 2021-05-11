@@ -87,7 +87,7 @@ class Creature(Figure):
         self.spotFood()
         self.spotCreatures()
         self.spotEnemies()
-        # self.spotFriends()
+        self.spotFriends()
         
         foodCosts = self.costsFood()
         creatureCosts = self.costsCreatures()
