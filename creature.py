@@ -1,8 +1,8 @@
 import numpy as np
-# from scipy.sparse import random
 from helpers import normalize, sRound, closestPoint
 from scipy.ndimage import gaussian_filter
 from itertools import product
+from genome import Genome
 
 class Figure(object):
 
@@ -49,10 +49,11 @@ class Creature(Figure):
     # Keeping track of all creatures is done in the grid class
     count = 0
 
-    def __init__(self, grid, pos, radius, genome=rg.random(5)):
+    def __init__(self, grid, pos):
         super().__init__()
-        self._grid = grid
         self._pos = np.array(pos)
+        self._genome = Genome()
+        self._grid = grid
 
         self.food = None
         self.creatures = None
@@ -60,9 +61,7 @@ class Creature(Figure):
         self.friends = None
         self.congener = None
         self.finalCosts = 0
-        
-        self._radius = radius
-        self._genome = genome
+
         self._grid.creatureList.append(self)
         self._id = Creature.count
         self._energy = 1
@@ -82,7 +81,7 @@ class Creature(Figure):
 
         self.spotFood()
         self.spotCreatures()
-        # self.spotEnemies()
+        self.spotEnemies()
         # self.spotFriends()
         
         foodCosts = self.costsFood()
@@ -165,17 +164,21 @@ class Creature(Figure):
         self.creatures[self.perceptualFieldSize, self.perceptualFieldSize] = 0
 
     def spotEnemies(self):
-        vCheckEnemy = np.vectorize(self.checkEnemy)
-        self.enemies = vCheckEnemy(self.creatures)
+        e = self.creatures.copy()
+        n = e.shape[0]
+        for i, j in product(range(n), range(n)):
+            if e[i,j] and e[i,j].genome.genes['enemy'].value * self.genome.genes['enemy'].value > 0:
+                # in this case the creature is not an enemy since enemies have 
+                # different signs hence the product is always positive if two 
+                # creatures are of the same species
+                e[i,j] = 0
+        self.enemies = e
 
     def spotFood(self):
         self.food = self.perceptualField(self._grid.foodGrid)
 
     def spotFriends(self):
         self.friends = self.creatures[self.enemies != self.creatures]
-
-    def checkEnemy(self, creatures):
-        return creatures if creatures and creatures._genome > self.genomThreshold else False
 
 # =============================================================================
 # costs
