@@ -1,8 +1,8 @@
 import numpy as np
-# from scipy.sparse import random
 from helpers import normalize, sRound, closestPoint
 from scipy.ndimage import gaussian_filter
 from itertools import product
+from genome import Genome
 
 class Figure(object):
 
@@ -48,10 +48,11 @@ class Creature(Figure):
     # Keeping track of all creatures is done in the grid class
     count = 0
 
-    def __init__(self, grid, pos, radius, genome=rg.random(5)):
+    def __init__(self, grid, pos):
         super().__init__()
-        self._grid = grid
         self._pos = np.array(pos)
+        self._genome = Genome()
+        self._grid = grid
 
         self.food = None
         self.creatures = None
@@ -59,9 +60,7 @@ class Creature(Figure):
         self.friends = None
         self.congener = None
         self.finalCosts = 0
-        
-        self._radius = radius
-        self._genome = genome
+
         self._grid.creatureList.append(self)
         self._id = Creature.count
         self._energy = 1
@@ -81,7 +80,7 @@ class Creature(Figure):
 
         self.spotFood()
         self.spotCreatures()
-        # self.enemies()
+        self.spotEnemies()
         # self.spotFriends()
         
         foodCosts = self.costsFood()
@@ -91,10 +90,6 @@ class Creature(Figure):
         randomCosts = self.costsRandom(0.02)
         topoCosts = self.perceptualField(self._grid.topography)
 
-        # foodCosts = -self.perceiveFood()
-        # creatureCosts = self.perceiveCreatures()
-        # randomCosts = self.rg.random(np.shape(self.distanceCosts)) * 0.02
-        # topoCosts = self.perceptualField(self._grid.topography)
         scentCosts = self.perceptualField(self._grid.scent)
         #finalCosts = np.multiply(Creature.costMatrix, (foodCosts + randomCosts ))
         
@@ -127,6 +122,9 @@ class Creature(Figure):
         if self._grid.foodGrid[self.gridIndex]:
             self.eat()
 
+# =============================================================================
+# actions
+# =============================================================================
     def eat(self):
         self._energy += self._grid.foodGrid[self.gridIndex].energy
         self._grid.foodGrid[self.gridIndex] = 0
@@ -135,13 +133,12 @@ class Creature(Figure):
         self._grid.creatureList.remove(self)
         self._grid.creatureGrid[self.gridIndex] = 0
 
-    
-
     # Move self, update grid data structure and energylevel
     def moveBy(self, vector):
         self._energy -= self.costsMove(vector)
         if self._energy <= 0:
             self.kill()
+            return
         self._grid.creatureGrid[self.gridIndex] = 0
         self._pos = self._pos + vector
         self._grid.creatureGrid[self.gridIndex] = self
@@ -149,10 +146,9 @@ class Creature(Figure):
     def ckeckEnergy(self, path):
         pass
 
-    @ property
-    def id(self):
-        return self._id
-
+# =============================================================================
+# perception
+# =============================================================================
     def perceptualField(self, grid):
         r = Creature.perceptualFieldSize
         lx = self.x - r
@@ -161,103 +157,74 @@ class Creature(Figure):
         uy = self.y + r + 1
         return grid[lx : ux, ly : uy]
 
-
-    def spotFood(self):
-        self.food = self.perceptualField(self._grid.foodGrid)
-
     def spotCreatures(self):
         self.creatures = self.perceptualField(self._grid.creatureGrid)
         # Make sure self is counted as other creature # is this necessary? can a creature stay at the same position?
         self.creatures[self.perceptualFieldSize, self.perceptualFieldSize] = 0
 
     def spotEnemies(self):
-        vCheckEnemy = np.vectorize(self.checkEnemy)
-        self.enemies = vCheckEnemy(self.creatures)
+        e = self.creatures.copy()
+        n = e.shape[0]
+        for i, j in product(range(n), range(n)):
+            if e[i,j] and e[i,j].genome.genes['enemy'].value * self.genome.genes['enemy'].value > 0:
+                # in this case the creature is not an enemy since enemies have 
+                # different signs hence the product is always positive if two 
+                # creatures are of the same species
+                e[i,j] = 0
+        self.enemies = e
+
+    def spotFood(self):
+        self.food = self.perceptualField(self._grid.foodGrid)
 
     def spotFriends(self):
         self.friends = self.creatures[self.enemies != self.creatures]
 
-    def costsFood(self):
-        # Assuming: creature cannot perceive food when another creatures is located there
-        # This is not necessary since food is always eaten when a creature steps to it
-        return -(self.food != 0).astype(int)
-
+# =============================================================================
+# costs
+# =============================================================================
     def costsCreatures(self):
         # Make sure self is counted as other creature
         return (self.creatures != 0).astype(int)
 
+    def costsDistances(self):
+        for i, j in product(range(2 * self.perceptualFieldSize + 1), range(2 * self.perceptualFieldSize + 1)):
+                self.distanceCosts[i,j] = np.linalg.norm(np.array([i - self.perceptualFieldSize, j - self.perceptualFieldSize]))
+        # Normalize
+        self.distanceCosts /= np.linalg.norm(np.array(self.pfPosition))
+
     def costsEnemies(self):
         return (self.enemies != 0).astype(int) * 100
 
-    def costsMove(self, path):
-        return np.linalg.norm(path)/self.maxMoves
+    def costsFood(self):
+        return -(self.food != 0).astype(int)
 
     def costsFriends(self):
         return (self.friends != 0).astype(int) * 10
 
+    def costsMove(self, path):
+        return np.linalg.norm(path)/self.maxMoves
+
     def costsRandom(self, factor):
         return self.rg.random(np.shape(self.distanceCosts)) * factor
 
-    def costsDistances(self):
-        for i, j in product(range(2 * self.perceptualFieldSize + 1), range(2 * self.perceptualFieldSize + 1)):
-                self.distanceCosts[i,j] = np.linalg.norm(np.array([i - self.perceptualFieldSize, j - self.perceptualFieldSize]))
-
-        # Normalize
-        self.distanceCosts /= np.linalg.norm(np.array(self.pfPosition))
-
-    def checkEnemy(self, creatures):
-        return creatures if creatures and creatures._genome > self.genomThreshold else False
-
-    # Assuming: creature cannot perceive food when another creatures is located there
-    def perceiveFood(self):
-        r = self.perceptualFieldSize
-        fieldFood = self.perceptualField(self._grid.foodGrid)
-        fieldCreatures = self.perceptualField(self._grid.creatureGrid)
-        # Make sure self is counted as other creature
-        fieldCreatures[r, r] = 0
-        field = np.logical_and(fieldFood != 0, fieldCreatures == 0)
-        return field.astype(int)
-
-    # TODO: exclude self
-    def perceiveEnemies(self):
-        field = self.perceptualField(self._grid.creatureGrid)
-        fieldCreatures = field != 0
-
-        def distance(a):
-            if a != 0:  
-                print(a)
-                return np.linalg.norm(a.genome, self.genome, ord='fro')
-            else:
-                return 1000
-        
-        vfunc = np.vectorize(distance)
-        #print(vfunc(field))
-
-        #enmemyCreatures = np.logical_and(distance(field) > self.genomThreshold, fieldCreatures)
-
-        #print(enemyCreatures)
-        # Make sure self is counted as other creature
-        return fieldCreatures.astype(int)
-
-    # TODO: exclude self
-    def perceiveFriends(self):
-        fieldCreatures = self.perceptualField(self._grid.creatureGrid) != 0
-        # Make sure self is counted as other creature
-        return fieldCreatures.astype(int)
-
-    # TODO: exclude self
-    def perceiveCreatures(self):
-        fieldCreatures = self.perceptualField(self._grid.creatureGrid) != 0
-        # Make sure self is counted as other creature
-        return fieldCreatures.astype(int)
+# =============================================================================
+# getters
+# =============================================================================
+    @ property
+    def deathRate(self):
+        return self._genome[3]
 
     @ property 
     def genome(self):
          return self._genome
 
-    @ property 
-    def moveToPlant(self):
-         return self._genome[0]
+    @ property
+    def gridIndex(self):
+        return (self.x, self.y)
+
+    @ property
+    def id(self):
+        return self._id
 
     @ property 
     def moveToEnemy(self):
@@ -267,17 +234,28 @@ class Creature(Figure):
     def moveToFriend(self):
         return self._genome[2]
 
-    @ property
-    def deathRate(self):
-        return self._genome[3]
+    @ property 
+    def moveToPlant(self):
+         return self._genome[0]
 
     @ property
     def replicationRate(self):
         return self._genome[4]
 
-    @ moveToPlant.setter
-    def moveToPlant(self, p):
-        self._genome[0] = p
+    @ property
+    def x(self):
+        return self._pos[0]
+
+    @ property
+    def y(self):
+        return self._pos[1]
+
+# =============================================================================
+# setters
+# =============================================================================
+    @ deathRate.setter
+    def deathRate(self, p):
+        self._genome[3] = p
 
     @ moveToEnemy.setter
     def moveToEnemy(self, p):
@@ -287,23 +265,12 @@ class Creature(Figure):
     def moveToFriend(self, p):
         self._genome[2] = p
 
-    @ deathRate.setter
-    def deathRate(self, p):
-        self._genome[3] = p
+    @ moveToPlant.setter
+    def moveToPlant(self, p):
+        self._genome[0] = p
 
     @ replicationRate.setter
     def replicationRate(self, p):
         self._genome[4] = p
 
-    # Positions could proably be removed from superclass
-    @ property
-    def x(self):
-        return self._pos[0]
 
-    @ property
-    def y(self):
-        return self._pos[1]
-
-    @ property
-    def gridIndex(self):
-        return (self.x, self.y)
