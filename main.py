@@ -4,11 +4,7 @@ from matplotlib.animation import FuncAnimation
 from grid import Grid
 # Parameters
 NFRAMES = 1000
-<<<<<<< HEAD
-SUBFRAMES = 2
-=======
 SUBFRAMES = 50
->>>>>>> a72d6456b26d1bfffe5956ab334e938b71b9baa7
 GRIDSIZE = 100
 
 grid = Grid(GRIDSIZE, 0.001, 0.03, 0.0002)
