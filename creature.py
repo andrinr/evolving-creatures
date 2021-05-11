@@ -39,9 +39,9 @@ class Creature(Figure):
     # Static
     maxMoves = 10
     genomThreshold = 0.2
-    perceptualFieldSize = 4
-    pfPosition = [perceptualFieldSize, perceptualFieldSize]
-    distanceCosts = np.zeros((perceptualFieldSize*2+1, perceptualFieldSize*2+1))
+    pfSize = 4
+    pfShape = [pfSize, pfSize]
+    distanceCosts = np.zeros((pfSize*2+1, pfSize*2+1))
     rg = np.random.default_rng()
 
     # Used to associate each creature with an ID, NOT to keep track of total number of creatures
@@ -91,30 +91,16 @@ class Creature(Figure):
         topoCosts = self.perceptualField(self._grid.topography)
 
         scentCosts = self.perceptualField(self._grid.scent)
-        #finalCosts = np.multiply(Creature.costMatrix, (foodCosts + randomCosts ))
-        
-        # Wird randomCosts für random moves benutzt? falls ja, ev. besser wir individualisieren die Bewegungen.
-        # foodcosts + costmatrix kann dazuführen, dass es günstiger ist, sich an einen andere Ort zu bewegen als direkt zum food. 
-        # Die Idee ist genial, aber muss noch gut durchdacht werden, vorallem weil wir später noch Predators hinzufügen. Wie entscheidet sie, 
-        # ob sie nun zum food läuft, davonläuft oder angreift? 
-        
-        # Antwort:
-        # Die randomCosts werden für zufällige Bewegungen genutzt wenn keine anderen Objekte in der Nähe sind
-        # Die randomCosts können mit einem sehr kleinen Faktor multipliziert werden, somit kann verhindert werden dass dumme entscheidungen getroffen werden
-
-        # Objekte denen man sich annähern soll haben ein negatives gewicht, objekte von denen man sich entfernen soll ein positives gewicht
-        # Die cost matrix wird geblurt und nacher das minimum gesucht. So kann verindert werden, dass sich eine Creatur in die nähe eines Feindes bewegt,
-        # Weil daneben essen liegt
 
         # Blur matrix to avoid creature from moving to food next to a threat
         creatureCosts = gaussian_filter(creatureCosts, sigma=0.5, mode="nearest")
         finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + scentCosts + self.distanceCosts
         # Avoid staying at the same place
-        finalCosts[self.perceptualFieldSize, self.perceptualFieldSize] = 2
+        finalCosts[self.pfSize, self.pfSize] = 2
         # Store final costs for plotting
         self.finalCosts = finalCosts
 
-        target = np.unravel_index(finalCosts.argmin(), finalCosts.shape) - np.array([self.perceptualFieldSize, self.perceptualFieldSize])
+        target = np.unravel_index(finalCosts.argmin(), finalCosts.shape) - np.array([self.pfSize, self.pfSize])
         move = sRound(normalize(target))
         self.moveBy(move)
         self._grid.scent[self.gridIndex] += 0.3
@@ -150,7 +136,7 @@ class Creature(Figure):
 # perception
 # =============================================================================
     def perceptualField(self, grid):
-        r = Creature.perceptualFieldSize
+        r = self.pfSize
         lx = self.x - r
         ly = self.y - r
         ux = self.x + r + 1
@@ -160,7 +146,7 @@ class Creature(Figure):
     def spotCreatures(self):
         self.creatures = self.perceptualField(self._grid.creatureGrid)
         # Make sure self is counted as other creature # is this necessary? can a creature stay at the same position?
-        self.creatures[self.perceptualFieldSize, self.perceptualFieldSize] = 0
+        self.creatures[self.pfSize, self.pfSize] = 0
 
     def spotEnemies(self):
         e = self.creatures.copy()
@@ -187,10 +173,10 @@ class Creature(Figure):
         return (self.creatures != 0).astype(int)
 
     def costsDistances(self):
-        for i, j in product(range(2 * self.perceptualFieldSize + 1), range(2 * self.perceptualFieldSize + 1)):
-                self.distanceCosts[i,j] = np.linalg.norm(np.array([i - self.perceptualFieldSize, j - self.perceptualFieldSize]))
+        for i, j in product(range(2 * self.pfSize + 1), range(2 * self.pfSize + 1)):
+                self.distanceCosts[i,j] = np.linalg.norm(np.array([i - self.pfSize, j - self.pfSize]))
         # Normalize
-        self.distanceCosts /= np.linalg.norm(np.array(self.pfPosition))
+        self.distanceCosts /= np.linalg.norm(np.array(self.pfShape))
 
     def costsEnemies(self):
         return (self.enemies != 0).astype(int) * 100
