@@ -27,7 +27,7 @@ class Grid:
 
         for i, j in product(range(Grid.ghostZone, N+Grid.ghostZone), range(Grid.ghostZone, N+Grid.ghostZone)):
             if (self.__rg.random() < creatureDensity):
-                self.creatureGrid[i,j] = Creature(self, [i, j], self.__rg.random())
+                self.creatureGrid[i,j] = Creature(self, [i, j])
 
 
     def updateAll(self):
@@ -48,8 +48,8 @@ class Grid:
 
         # Plot food
         axl.imshow(self.foodGrid != 0, origin='upper')
-
-        axr.imshow(self.creatureList[0].finalCosts, vmin=0, vmax=2)
-        axr.set_title("Perception field ID: " + str(self.creatureList[0]._id))
+        if len(self.creatureList):
+            axr.imshow(self.creatureList[0].finalCosts, vmin=0, vmax=2)
+            axr.set_title("Perception field ID: " + str(self.creatureList[0]._id))
 
     
