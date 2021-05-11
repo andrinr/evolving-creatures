@@ -29,7 +29,6 @@ class Grid:
             if (self.__rg.random() < creatureDensity):
                 self.creatureGrid[i,j] = Creature(self, [i, j], self.__rg.random())
 
-
     def updateAll(self):
         self.scent *= 0.9
         # Cannot be parallelized due to race condition issues
