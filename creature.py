@@ -34,6 +34,12 @@ class Food(Figure):
     def __rmul__(self, a):
         return self if a else a
 
+    def __add__(self, a):
+        return self 
+
+    def __radd__(self, a):
+        return self
+
 
 class Creature(Figure):
     # Static
@@ -96,7 +102,7 @@ class Creature(Figure):
         creatureCosts = gaussian_filter(creatureCosts, sigma=0.5, mode="nearest")
         finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + scentCosts + self.distanceCosts
         # Avoid staying at the same place
-        finalCosts[self.pfSize, self.pfSize] = 2
+        finalCosts[self.pfSize, self.pfSize] = 1
         # Store final costs for plotting
         self.finalCosts = finalCosts
 
