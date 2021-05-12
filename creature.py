@@ -43,7 +43,7 @@ class Food(Figure):
 
 class Creature(Figure):
     # Static
-    maxMoves = 10
+    costsPerUnitMove = 0.1
     genomThreshold = 0.2
     pfSize = 4
     pfShape = [pfSize, pfSize]
@@ -54,7 +54,7 @@ class Creature(Figure):
     # Keeping track of all creatures is done in the grid class
     count = 0
 
-    def __init__(self, grid, pos):
+    def __init__(self, grid, pos, energy):
         super().__init__()
         self._pos = np.array(pos)
         self._genome = Genome()
@@ -68,8 +68,9 @@ class Creature(Figure):
         self.finalCosts = 0
 
         self._grid.creatureList.append(self)
+        self._grid.creatureGrid[self.gridIndex] = self
         self._id = Creature.count
-        self._energy = 1
+        self._energy = energy
 
         # Assuming all creatures have the same perceptualFieldSize
         # We calculate this here to save computing costs
@@ -114,6 +115,12 @@ class Creature(Figure):
         if self._grid.foodGrid[self.gridIndex]:
             self.eat()
 
+        # TODO: define this by genes
+        if self.energy > 2.0:
+            self.breed()
+
+        
+
 # =============================================================================
 # actions
 # =============================================================================
@@ -138,11 +145,42 @@ class Creature(Figure):
     def ckeckEnergy(self, path):
         pass
 
+    def breed(self):
+        adj = self.adjacencyField(self._grid.creatureGrid)
+        free = adj == 0
+        nChildrenAim = 2
+        nChildrenActual = 0
+
+        iRand = np.linspace(0, 2, 3, dtype=int)
+        self.rg.shuffle(iRand)
+        jRand = np.linspace(0, 2, 3, dtype=int)
+        self.rg.shuffle(jRand)
+        
+        for i, j in product(iRand, jRand):
+            if (free[i,j]):
+                nChildrenActual += 1
+                Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim)
+
+                if (nChildrenActual == nChildrenAim):
+                    break
+            
+        self.kill()
+
+            
+
 # =============================================================================
 # perception
 # =============================================================================
     def perceptualField(self, grid):
         r = self.pfSize
+        lx = self.x - r
+        ly = self.y - r
+        ux = self.x + r + 1
+        uy = self.y + r + 1
+        return grid[lx : ux, ly : uy]
+
+    def adjacencyField(self, grid):
+        r = 1
         lx = self.x - r
         ly = self.y - r
         ux = self.x + r + 1
@@ -194,7 +232,7 @@ class Creature(Figure):
         return (self.friends != 0).astype(int) * 10
 
     def costsMove(self, path):
-        return np.linalg.norm(path)/self.maxMoves
+        return np.linalg.norm(path)*self.costsPerUnitMove
 
     def costsRandom(self, factor):
         return self.rg.random(np.shape(self.distanceCosts)) * factor

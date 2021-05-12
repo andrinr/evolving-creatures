@@ -30,7 +30,7 @@ class Grid:
 
         for i, j in product(range(Grid.ghostZone, N+Grid.ghostZone), range(Grid.ghostZone, N+Grid.ghostZone)):
             if (self.__rg.random() < creatureDensity):
-                self.creatureGrid[i,j] = Creature(self, [i, j])
+                Creature(self, [i, j], 1.0)
 
     def updateAll(self):
         self.scent *= 0.9
