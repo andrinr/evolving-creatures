@@ -50,6 +50,9 @@ class Grid:
         for creature in shuffled:
             creature.update()
 
+        self.histCreatures.append(len(self.creatureList))
+        self.histFood.append(np.count_nonzero(self.foodGrid))
+
     def plotAll(self, axl, axPf, axFood):
         # Could be parallelized
         # mayube using numpy vectorize?
@@ -63,10 +66,6 @@ class Grid:
         
             axPf.imshow(self.creatureList[0].finalCosts.astype(float), vmin=0, vmax=1.2, cmap='magma')
             axPf.set_title("Perception field ID: " + str(self.creatureList[0]._id))
-
-
-        self.histCreatures.append(len(self.creatureList))
-        self.histFood.append(np.count_nonzero(self.foodGrid))
 
         axFood.plot(range(len(self.histFood)), self.histFood, c="green")
         axFood.plot(range(len(self.histCreatures)), self.histCreatures, c="red")

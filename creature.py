@@ -1,7 +1,7 @@
 import numpy as np
 from helpers import normalize, sRound, closestPoint
 from scipy.ndimage import gaussian_filter
-from itertools import product
+from itertools import product, combinations
 from genome import Genome
 
 class Figure(object):
@@ -43,7 +43,7 @@ class Food(Figure):
 
 class Creature(Figure):
     # Static
-    costsPerUnitMove = 0.1
+    costsPerUnitMove = 0.07
     genomThreshold = 0.2
     pfSize = 4
     pfShape = [pfSize, pfSize]
@@ -145,7 +145,6 @@ class Creature(Figure):
     def ckeckEnergy(self, path):
         pass
 
-    # Needs to be speedup, major bottleneck
     def breed(self):
         # Adjacency field are all the fields within a distance of 1
         adj = self.adjacencyField(self._grid.creatureGrid)
@@ -154,14 +153,8 @@ class Creature(Figure):
         # Set the aim of new children, limited by the avaiable space
         nChildrenAim = min(self.rg.integers(1, high=4), np.count_nonzero(free))
         nChildrenActual = 0
-
-        # Randomly iterate over adjecent cells
-        iRand = np.linspace(0, 2, 3, dtype=int)
-        self.rg.shuffle(iRand)
-        jRand = np.linspace(0, 2, 3, dtype=int)
-        self.rg.shuffle(jRand)
         
-        for i, j in product(iRand, jRand):
+        for i, j in combinations(range(3), 2):
             # Spawn creature when cell is free
             if (free[i,j]):
                 nChildrenActual += 1

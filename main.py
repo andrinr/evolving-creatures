@@ -5,18 +5,18 @@ from grid import Grid
 import time
 # Parameters
 NFRAMES = 1000
-SUBFRAMES = 5
+SUBFRAMES = 50
 GRIDSIZE = 100
 
-grid = Grid(GRIDSIZE, 0.002, 0.03, 0.001)
+grid = Grid(GRIDSIZE, 0.001, 0.03, 0.0002)
 
 print("number of creatures: ", len(grid.creatureList))
 
 fig = plt.figure(constrained_layout=True)
-gs = fig.add_gridspec(3, 3)
+gs = fig.add_gridspec(4, 3)
 axLeft = fig.add_subplot(gs[:,0:2])
 axPf = fig.add_subplot(gs[0,2])
-axFood = fig.add_subplot(gs[1,2])
+axFood = fig.add_subplot(gs[1,2:3])
 
 iteration = 0
 def update(f):
