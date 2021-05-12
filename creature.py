@@ -146,21 +146,26 @@ class Creature(Figure):
         pass
 
     def breed(self):
+        # Adjacency field are all the fields within a distance of 1
         adj = self.adjacencyField(self._grid.creatureGrid)
+        # All instances where there is no other creature
         free = adj == 0
-        nChildrenAim = 2
+        # Set the im of new children, limited by the avaiable space
+        nChildrenAim = min(self.rg.integers(1, high=4), np.count_nonzero(free))
         nChildrenActual = 0
 
+        # Randomly iterate over adjecent cells
         iRand = np.linspace(0, 2, 3, dtype=int)
         self.rg.shuffle(iRand)
         jRand = np.linspace(0, 2, 3, dtype=int)
         self.rg.shuffle(jRand)
         
         for i, j in product(iRand, jRand):
+            # Spawn creature when cell is free
             if (free[i,j]):
                 nChildrenActual += 1
                 Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim)
-
+                # Break loop when right amount of children is reached
                 if (nChildrenActual == nChildrenAim):
                     break
             
