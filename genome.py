@@ -106,7 +106,7 @@ class Genome:
 
     @ property
     def genes(self):
-        keys = ['enemy', 'size', 'pfSize', 'aggression']
+        keys = ['predator', 'size', 'pfSize', 'aggression']
         return dict(zip(keys, self.__genes))
 
     @ property

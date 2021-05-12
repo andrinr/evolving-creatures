@@ -45,7 +45,7 @@ class Creature(Figure):
     # Static
     costsPerUnitMove = 0.07
     genomThreshold = 0.2
-    pfSize = 4
+    pfSize = 5
     pfShape = [pfSize, pfSize]
     distanceCosts = np.zeros((pfSize*2+1, pfSize*2+1))
     rg = np.random.default_rng()
@@ -87,7 +87,7 @@ class Creature(Figure):
 
         self.spotFood()
         self.spotCreatures()
-        self.spotEnemies()
+        self.spotPredators()
         self.spotFriends()
         
         foodCosts = self.costsFood()
@@ -99,9 +99,16 @@ class Creature(Figure):
 
         scentCosts = self.perceptualField(self._grid.scent)
 
-        # Blur matrix to avoid creature from moving to food next to a threat
-        creatureCosts = gaussian_filter(creatureCosts, sigma=0.5, mode="nearest")
         finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + scentCosts + self.distanceCosts
+
+        # Only preys needs to flee predators
+        if not self.genome.genes['predator'].value:
+            # Blur matrix to avoid creature from moving to food next to a threat
+            predatorCosts = self.costsPredators()
+            predatorCosts = gaussian_filter(predatorCosts, sigma=0.5, mode="nearest")
+
+            finalCosts += predatorCosts
+
         # Avoid staying at the same place
         finalCosts[self.pfSize, self.pfSize] = 1
         # Store final costs for plotting
@@ -113,7 +120,7 @@ class Creature(Figure):
         self._grid.scent[self.gridIndex] += 0.3
 
         if self._grid.foodGrid[self.gridIndex]:
-            self.eat()
+            self.eatFood()
 
         # TODO: define this by genes
         if self.energy > 3.0:
@@ -124,9 +131,12 @@ class Creature(Figure):
 # =============================================================================
 # actions
 # =============================================================================
-    def eat(self):
+    def eatFood(self):
         self._energy += self._grid.foodGrid[self.gridIndex].energy
         self._grid.foodGrid[self.gridIndex] = 0
+
+    def eatEnemy(self):
+        pass
 
     def kill(self):
         self._grid.creatureList.remove(self)
@@ -191,11 +201,11 @@ class Creature(Figure):
         # Make sure self is counted as other creature # is this necessary? can a creature stay at the same position?
         self.creatures[self.pfSize, self.pfSize] = 0
 
-    def spotEnemies(self):
+    def spotPredators(self):
         e = self.creatures.copy()
         n = e.shape[0]
         for i, j in product(range(n), range(n)):
-            if e[i,j] and e[i,j].genome.genes['enemy'].value * self.genome.genes['enemy'].value > 0:
+            if e[i,j] and e[i,j].genome.genes['predator'].value * self.genome.genes['predator'].value > 0:
                 # in this case the creature is not an enemy since enemies have 
                 # different signs hence the product is always positive if two 
                 # creatures are of the same species
@@ -221,8 +231,8 @@ class Creature(Figure):
         # Normalize
         self.distanceCosts /= np.linalg.norm(np.array(self.pfShape))
 
-    def costsEnemies(self):
-        return (self.enemies != 0).astype(int) * 100
+    def costsPredators(self):
+        return (self.enemies != 0).astype(int) * 10
 
     def costsFood(self):
         return -(self.food != 0).astype(int)

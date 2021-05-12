@@ -8,7 +8,7 @@ from itertools import product
 class Grid:
 
     #Ghost zone should be bigger than Creature.perceptionFieldSize
-    ghostZone = 5
+    ghostZone = 6
 
     def __init__(self, N, creatureDensity, initFoodDensity, dtfoodDenstiy):
         self.creatureList = []
@@ -57,7 +57,12 @@ class Grid:
         # Could be parallelized
         # mayube using numpy vectorize?
         for creature in self.creatureList:
-            axl.scatter(creature.y, creature.x, s=creature.energy*10, c="red")
+            print(creature.genome.genes['predator'].value)
+            if creature.genome.genes['predator'].value:
+                axl.scatter(creature.y, creature.x, s=creature.energy*10, c="red")
+            else:
+                axl.scatter(creature.y, creature.x, s=creature.energy*10, c="blue")
+
             axl.annotate(creature.id, (creature.y, creature.x), c='black')
 
         # Plot food
