@@ -52,7 +52,7 @@ class Creature(Figure):
 
     # Used to associate each creature with an ID, NOT to keep track of total number of creatures
     # Keeping track of all creatures is done in the grid class
-    count = 0
+    uniqueId = 0
 
     def __init__(self, grid, pos, energy):
         super().__init__()
@@ -69,15 +69,15 @@ class Creature(Figure):
 
         self._grid.creatureList.append(self)
         self._grid.creatureGrid[self.gridIndex] = self
-        self._id = Creature.count
+        self._id = Creature.uniqueId
         self._energy = energy
 
         # Assuming all creatures have the same perceptualFieldSize
         # We calculate this here to save computing costs
-        if not self.count:
+        if not self.uniqueId:
             self.costsDistances()
 
-        Creature.count += 1
+        Creature.uniqueId += 1
 
     def __str__(self):
         return 'Creature ID. = {}\nEnergyLevel = {}\n'.format(self.id, self.energy)
@@ -116,7 +116,7 @@ class Creature(Figure):
             self.eat()
 
         # TODO: define this by genes
-        if self.energy > 2.0:
+        if self.energy > 3.0:
             self.breed()
 
         
@@ -145,12 +145,13 @@ class Creature(Figure):
     def ckeckEnergy(self, path):
         pass
 
+    # Needs to be speedup, major bottleneck
     def breed(self):
         # Adjacency field are all the fields within a distance of 1
         adj = self.adjacencyField(self._grid.creatureGrid)
         # All instances where there is no other creature
         free = adj == 0
-        # Set the im of new children, limited by the avaiable space
+        # Set the aim of new children, limited by the avaiable space
         nChildrenAim = min(self.rg.integers(1, high=4), np.count_nonzero(free))
         nChildrenActual = 0
 
