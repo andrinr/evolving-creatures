@@ -57,20 +57,19 @@ class Grid:
         # Could be parallelized
         # mayube using numpy vectorize?
         for creature in self.creatureList:
-            print(creature.genome.genes['predator'].value)
             if creature.genome.genes['predator'].value:
                 axl.scatter(creature.y, creature.x, s=creature.energy*10, c="red")
             else:
                 axl.scatter(creature.y, creature.x, s=creature.energy*10, c="blue")
 
-            axl.annotate(creature.id, (creature.y, creature.x), c='black')
+            #axl.annotate(creature.id, (creature.y, creature.x), c='black')
 
         # Plot food
         axl.imshow(self.foodGrid != 0, origin='upper', cmap="Greens")
         if len(self.creatureList):
         
             axPf.imshow(self.creatureList[0].finalCosts.astype(float), vmin=0, vmax=1.2, cmap='magma')
-            axPf.set_title("Perception field ID: " + str(self.creatureList[0]._id))
+            axPf.set_title("PF ID: " + str(self.creatureList[0]._id))
 
         axFood.plot(range(len(self.histFood)), self.histFood, c="green")
         axFood.plot(range(len(self.histCreatures)), self.histCreatures, c="red")

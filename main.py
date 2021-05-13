@@ -5,7 +5,7 @@ from grid import Grid
 import time
 # Parameters
 NFRAMES = 1000
-SUBFRAMES = 50
+SUBFRAMES = 100
 GRIDSIZE = 100
 
 grid = Grid(GRIDSIZE, 0.001, 0.03, 0.0002)
@@ -30,24 +30,24 @@ def update(f):
         end = time.perf_counter()
         elapsed += end - start
     
-    print('avg update performance time: ', elapsed/SUBFRAMES)
+    print('avg update performance time (s): ', elapsed/SUBFRAMES)
 
     start = time.perf_counter()
     axLeft.clear()
     axPf.clear()
     axFood.clear()
-    axLeft.set_xlim(Grid.ghostZone-1,GRIDSIZE+Grid.ghostZone)
-    axLeft.set_ylim(GRIDSIZE+Grid.ghostZone,Grid.ghostZone-1)
+    axLeft.set_xlim(0,GRIDSIZE+2*Grid.ghostZone)
+    axLeft.set_ylim(GRIDSIZE+2*Grid.ghostZone,0)
     grid.plotAll(axLeft, axPf, axFood)
     end = time.perf_counter()
     elapsed = end - start
 
-    print('plot performance time: ', elapsed)
+    print('plot performance time(s): ', elapsed)
 
     print("current itartion number: ", iteration)
     return
 
-animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=300, repeat=False)
+animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=50, repeat=False)
 
 plt.show()
 
