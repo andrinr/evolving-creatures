@@ -2,7 +2,6 @@ from operator import attrgetter
 import numpy as np
 import math
 
-
 class Genome:
     rg =  np.random.default_rng()
     nGenes = 5
