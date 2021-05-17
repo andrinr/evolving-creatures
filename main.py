@@ -4,8 +4,8 @@ from matplotlib.animation import FuncAnimation
 from grid import Grid
 import time
 # Parameters
-NFRAMES = 1000
-SUBFRAMES = 100
+NFRAMES = 10000
+SUBFRAMES = 10
 GRIDSIZE = 100
 
 grid = Grid(GRIDSIZE, 0.001, 0.03, 0.0002)
@@ -30,7 +30,7 @@ def update(f):
         end = time.perf_counter()
         elapsed += end - start
     
-    print('avg update performance time (s): ', elapsed/SUBFRAMES)
+    print('avg update performance time(s): ', elapsed/SUBFRAMES)
 
     start = time.perf_counter()
     axLeft.clear()

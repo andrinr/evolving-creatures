@@ -75,11 +75,17 @@ class Gene:
         return self.__value
 
 
+# Generally not sure if this does not overcomplicate things...
 class Genome:
 
     # {name of Gene1: ((phenotype1, dominance), (phenotype2, dominance)), ...}
+    # Maybe its better not to hardcode predator or prey, let each creature by the variation to the genes decide weather is a enemy or a friend
+    # Then interesting things can happen where a creature thinks the other one is a friend, but actually isnt etc.
+    # Also I dont understand why these parameters are already set at this point?
     phenotypes = {'gene1':[['predator', False], ['prey',True]],
+                    # Is that meant to be sizeM, sizeF for mother and father?
                   'gene2':[['sizeM', True],['sizeL', False]],
+                    # Changes in perceptual fields cannot be encoded, since a bigger perceptual field will only lead to benefits
                   'gene3':[['pFSizeM', False], ['pfSizeL', True]], 
                   'gene4':[['aggressive', False], ['peaceful', True]]}
 
@@ -156,7 +162,7 @@ class Fertilisation:
     def __init__(self, chromatidsF, chromatidsM):
         self.__chromatidF = np.random.choice(chromatidsF)
         self.__chromatidM = np.random.choice(chromatidsM)
-        self.__genome = Genome([Gene(aF, aM) for aF, aM in zip(self.__chromatidF, self.chromatidM)])
+        self.__genome = Genome([Gene(aF, aM) for aF, aM in zip(self.__chromatidF, self.__chromatidM)])
 
     @ property
     def genome(self):

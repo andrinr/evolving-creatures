@@ -49,9 +49,7 @@ class Creature(Figure):
     pfShape = [pfSize, pfSize]
     distanceCosts = np.zeros((pfSize*2+1, pfSize*2+1))
     rg = np.random.default_rng()
-
-    # Used to associate each creature with an ID, NOT to keep track of total number of creatures
-    # Keeping track of all creatures is done in the grid class
+    
     uniqueId = 0
 
     def __init__(self, grid, pos, energy):
@@ -69,7 +67,7 @@ class Creature(Figure):
 
         self._grid.creatureList.append(self)
         self._grid.creatureGrid[self.gridIndex] = self
-        self._id = Creature.uniqueId
+
         self._energy = energy
 
         # Assuming all creatures have the same perceptualFieldSize
@@ -77,6 +75,7 @@ class Creature(Figure):
         if not self.uniqueId:
             self.costsDistances()
 
+        self._id = Creature.uniqueId
         Creature.uniqueId += 1
 
     def __str__(self):

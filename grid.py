@@ -13,7 +13,6 @@ class Grid:
     def __init__(self, N, creatureDensity, initFoodDensity, dtfoodDenstiy):
         self.creatureList = []
         self.__rg =  np.random.default_rng()
-        self.__N = N
         self.dtfoodDensity = dtfoodDenstiy
         self.outerGridShape = (N+self.ghostZone*2, N+self.ghostZone*2)
         self.innerGridShape = (N,N)
@@ -29,8 +28,6 @@ class Grid:
 
         # Each creature leave behind a scent, avoids creature to make repetitive moves
         self.scent = np.zeros(self.outerGridShape, dtype=float)
-
-        self.N = N
 
         for i, j in product(range(Grid.ghostZone, N+Grid.ghostZone), range(Grid.ghostZone, N+Grid.ghostZone)):
             if (self.__rg.random() < creatureDensity):
