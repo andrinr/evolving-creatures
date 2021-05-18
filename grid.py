@@ -4,22 +4,25 @@ import random
 # from scipy.sparse import random
 from creature import Creature, Food
 from itertools import product
+from genome2 import Genome
 
 class Grid:
 
     #Ghost zone should be bigger than Creature.perceptionFieldSize
     ghostZone = 6
 
-    def __init__(self, N, creatureDensity, initFoodDensity, dtfoodDenstiy):
+    def __init__(self, N, nCreatures, nFood, dtfoodDenstiy):
         self.creatureList = []
         self.__rg =  np.random.default_rng()
         self.dtfoodDensity = dtfoodDenstiy
         self.outerGridShape = (N+self.ghostZone*2, N+self.ghostZone*2)
         self.innerGridShape = (N,N)
         self.innerGridSlice = (slice(self.ghostZone, N+self.ghostZone),slice(self.ghostZone, N+self.ghostZone))
+        self.innerIndices = np.transpose(np.meshgrid(range(Grid.ghostZone, N+Grid.ghostZone), range(Grid.ghostZone, N+Grid.ghostZone))).reshape(-1,2)
+
 
         self.foodGrid = np.zeros(self.outerGridShape, dtype=object)
-        self.foodGrid[self.innerGridSlice] = (self.__rg.random(self.innerGridShape).astype(float) < initFoodDensity).astype(int) * Food()
+        self.foodGrid[self.innerGridSlice] = (self.__rg.random(self.innerGridShape).astype(float) < nFood).astype(int) * Food()
 
         self.creatureGrid = np.zeros(self.outerGridShape, dtype=object)
 
@@ -29,12 +32,12 @@ class Grid:
         # Each creature leave behind a scent, avoids creature to make repetitive moves
         self.scent = np.zeros(self.outerGridShape, dtype=float)
 
-        for i, j in product(range(Grid.ghostZone, N+Grid.ghostZone), range(Grid.ghostZone, N+Grid.ghostZone)):
-            if (self.__rg.random() < creatureDensity):
-                Creature(self, [i, j], 1.0)
+        [Creature(self, pos, 1.0, Genome()) for pos in self.innerIndices[self.__rg.choice(range(N*N), nCreatures)]]
 
         self.histCreatures = []
         self.histFood = []
+
+        
 
     def updateAll(self):
         self.scent *= 0.9
@@ -53,13 +56,13 @@ class Grid:
     def plotAll(self, axl, axPf, axFood):
         # Could be parallelized
         # mayube using numpy vectorize?
-        for creature in self.creatureList:
-            if creature.genome.genes['predator'].value:
-                axl.scatter(creature.y, creature.x, s=creature.energy*10, c="red")
-            else:
-                axl.scatter(creature.y, creature.x, s=creature.energy*10, c="blue")
+        # for creature in self.creatureList:
+        #     if creature.genome.genes['predator'].value:
+        #         axl.scatter(creature.y, creature.x, s=creature.energy*10, c="red")
+        #     else:
+        #         axl.scatter(creature.y, creature.x, s=creature.energy*10, c="blue")
 
-            #axl.annotate(creature.id, (creature.y, creature.x), c='black')
+        #     #axl.annotate(creature.id, (creature.y, creature.x), c='black')
 
         # Plot food
         axl.imshow(self.foodGrid != 0, origin='upper', cmap="Greens")
