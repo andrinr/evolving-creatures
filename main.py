@@ -5,10 +5,10 @@ from grid import Grid
 import time
 # Parameters
 NFRAMES = 1000
-SUBFRAMES = 5
+SUBFRAMES = 1
 GRIDSIZE = 100
 
-grid = Grid(GRIDSIZE, 100, .05, 0.0002)
+grid = Grid(GRIDSIZE, 10, .05, 0.0002)
 print("number of creatures: ", len(grid.creatureList))
 
 fig = plt.figure(constrained_layout=True)
@@ -37,7 +37,7 @@ def update(f):
     axFood.clear()
     axLeft.set_xlim(0,GRIDSIZE+2*Grid.ghostZone)
     axLeft.set_ylim(GRIDSIZE+2*Grid.ghostZone,0)
-    grid.plotAll(axLeft, axPf, axFood)
+    #grid.plotAll(axLeft, axPf, axFood)
     end = time.perf_counter()
     elapsed = end - start
 

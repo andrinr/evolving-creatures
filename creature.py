@@ -123,7 +123,7 @@ class Creature(Figure):
             self.eatFood()
 
         # TODO: define this by genes
-        if self.energy > 3.0:
+        if self.energy > self._genome.getGen('breedThreeshold'):
             self.breed()
 
         
@@ -162,16 +162,20 @@ class Creature(Figure):
         # free = adj == 0
         # Set the aim of new children, limited by the available space
         # nChildrenAim = min(self.rg.integers(1, high=4, endpoint=True), np.count_nonzero(free))
-        nKids = 0
 
         freePos = np.where(adj==0)
         freePos = list(zip(freePos[0], freePos[1]))
+
+        nKids = 0
+        target = min(self._genome.getGen('breedMax'), np.count_nonzero(freePos))
+
         for i, j in freePos:
             # Spawn creature when cell is free
             nKids += 1
-            Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/4, self._genome.replicate(.05))
+            newGenome = self._genome.mutate(.05)
+            Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/target, newGenome )
             # Break loop when right amount of children is reached
-            if nKids > 4:
+            if nKids > target:
                 break
             
         self.kill()
@@ -242,7 +246,7 @@ class Creature(Figure):
         return (self.friends != 0).astype(int) * 10
 
     def costsMove(self, path):
-        return np.linalg.norm(path)*self.costsPerUnitMove
+        return np.linalg.norm(path)*self.costsPerUnitMove*self._genome.getGen('size')
 
     def costsRandom(self, factor):
         return self.rg.random(np.shape(self.distanceCosts)) * factor
