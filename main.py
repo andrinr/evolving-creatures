@@ -4,12 +4,11 @@ from matplotlib.animation import FuncAnimation
 from grid import Grid
 import time
 # Parameters
-NFRAMES = 10000
-SUBFRAMES = 10
+NFRAMES = 1000
+SUBFRAMES = 5
 GRIDSIZE = 100
 
-grid = Grid(GRIDSIZE, 0.001, 0.03, 0.0002)
-
+grid = Grid(GRIDSIZE, 100, .05, 0.0002)
 print("number of creatures: ", len(grid.creatureList))
 
 fig = plt.figure(constrained_layout=True)
@@ -43,8 +42,8 @@ def update(f):
     elapsed = end - start
 
     print('plot performance time(s): ', elapsed)
-
-    print("current itartion number: ", iteration)
+    print("number of creatures: ", len(grid.creatureList))
+    print("current itartion number: ", iteration, '\n')
     return
 
 animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=50, repeat=False)
