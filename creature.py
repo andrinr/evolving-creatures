@@ -52,10 +52,11 @@ class Creature(Figure):
     
     uniqueId = 0
 
-    def __init__(self, grid, pos, energy):
+    def __init__(self, grid, pos, energy, genome):
         super().__init__()
         self._pos = np.array(pos)
-        self._genome = Genome()
+        # self._genome = Genome()
+        self._genome = genome
         self._grid = grid
 
         self.food = None
@@ -86,7 +87,7 @@ class Creature(Figure):
 
         self.spotFood()
         self.spotCreatures()
-        self.spotPredators()
+        # self.spotPredators()
         self.spotFriends()
         
         foodCosts = self.costsFood()
@@ -100,13 +101,13 @@ class Creature(Figure):
 
         finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + scentCosts + self.distanceCosts
 
-        # Only preys needs to flee predators
-        if not self.genome.genes['predator'].value:
-            # Blur matrix to avoid creature from moving to food next to a threat
-            predatorCosts = self.costsPredators()
-            predatorCosts = gaussian_filter(predatorCosts, sigma=0.5, mode="nearest")
+        # # Only preys needs to flee predators
+        # if not self.genome.genes['predator'].value:
+        #     # Blur matrix to avoid creature from moving to food next to a threat
+        #     predatorCosts = self.costsPredators()
+        #     predatorCosts = gaussian_filter(predatorCosts, sigma=0.5, mode="nearest")
 
-            finalCosts += predatorCosts
+        #     finalCosts += predatorCosts
 
         # Avoid staying at the same place
         finalCosts[self.pfSize, self.pfSize] = 1
@@ -158,19 +159,20 @@ class Creature(Figure):
         # Adjacency field are all the fields within a distance of 1
         adj = self.adjacencyField(self._grid.creatureGrid)
         # All instances where there is no other creature
-        free = adj == 0
-        # Set the aim of new children, limited by the avaiable space
-        nChildrenAim = min(self.rg.integers(1, high=4), np.count_nonzero(free))
-        nChildrenActual = 0
-        
-        for i, j in combinations(range(3), 2):
+        # free = adj == 0
+        # Set the aim of new children, limited by the available space
+        # nChildrenAim = min(self.rg.integers(1, high=4, endpoint=True), np.count_nonzero(free))
+        nKids = 0
+
+        freePos = np.where(adj==0)
+        freePos = list(zip(freePos[0], freePos[1]))
+        for i, j in freePos:
             # Spawn creature when cell is free
-            if (free[i,j]):
-                nChildrenActual += 1
-                Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim)
-                # Break loop when right amount of children is reached
-                if (nChildrenActual == nChildrenAim):
-                    break
+            nKids += 1
+            Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/4, self._genome.replicate(.05))
+            # Break loop when right amount of children is reached
+            if nKids > 4:
+                break
             
         self.kill()
 
@@ -248,9 +250,9 @@ class Creature(Figure):
 # =============================================================================
 # getters
 # =============================================================================
-    @ property
-    def deathRate(self):
-        return self._genome[3]
+    # @ property
+    # def deathRate(self):
+    #     return self._genome[3]
 
     @ property 
     def genome(self):
@@ -264,21 +266,21 @@ class Creature(Figure):
     def id(self):
         return self._id
 
-    @ property 
-    def moveToEnemy(self):
-        return self._genome[1]
+    # @ property 
+    # def moveToEnemy(self):
+    #     return self._genome[1]
 
-    @ property 
-    def moveToFriend(self):
-        return self._genome[2]
+    # @ property 
+    # def moveToFriend(self):
+    #     return self._genome[2]
 
-    @ property 
-    def moveToPlant(self):
-         return self._genome[0]
+    # @ property 
+    # def moveToPlant(self):
+    #      return self._genome[0]
 
-    @ property
-    def replicationRate(self):
-        return self._genome[4]
+    # @ property
+    # def replicationRate(self):
+    #     return self._genome[4]
 
     @ property
     def x(self):
@@ -291,24 +293,24 @@ class Creature(Figure):
 # =============================================================================
 # setters
 # =============================================================================
-    @ deathRate.setter
-    def deathRate(self, p):
-        self._genome[3] = p
+    # @ deathRate.setter
+    # def deathRate(self, p):
+    #     self._genome[3] = p
 
-    @ moveToEnemy.setter
-    def moveToEnemy(self, p):
-        self._genome[1] = p
+    # @ moveToEnemy.setter
+    # def moveToEnemy(self, p):
+    #     self._genome[1] = p
 
-    @ moveToFriend.setter
-    def moveToFriend(self, p):
-        self._genome[2] = p
+    # @ moveToFriend.setter
+    # def moveToFriend(self, p):
+    #     self._genome[2] = p
 
-    @ moveToPlant.setter
-    def moveToPlant(self, p):
-        self._genome[0] = p
+    # @ moveToPlant.setter
+    # def moveToPlant(self, p):
+    #     self._genome[0] = p
 
-    @ replicationRate.setter
-    def replicationRate(self, p):
-        self._genome[4] = p
+    # @ replicationRate.setter
+    # def replicationRate(self, p):
+    #     self._genome[4] = p
 
 
