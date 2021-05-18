@@ -4,6 +4,7 @@ import random
 # from scipy.sparse import random
 from creature import Creature, Food
 from itertools import product
+from genome2 import Genome
 
 class Grid:
 
@@ -31,7 +32,7 @@ class Grid:
 
         for i, j in product(range(Grid.ghostZone, N+Grid.ghostZone), range(Grid.ghostZone, N+Grid.ghostZone)):
             if (self.__rg.random() < creatureDensity):
-                Creature(self, [i, j], 1.0)
+                Creature(self, [i, j], 1.0, Genome())
 
         self.histCreatures = []
         self.histFood = []
@@ -54,10 +55,9 @@ class Grid:
         # Could be parallelized
         # mayube using numpy vectorize?
         for creature in self.creatureList:
-            if creature.genome.genes['predator'].value:
-                axl.scatter(creature.y, creature.x, s=creature.energy*10, c="red")
-            else:
-                axl.scatter(creature.y, creature.x, s=creature.energy*10, c="blue")
+
+            axl.scatter(creature.y, creature.x, s=creature.energy*10, c="red")
+   
 
             #axl.annotate(creature.id, (creature.y, creature.x), c='black')
 

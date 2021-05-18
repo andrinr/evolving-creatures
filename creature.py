@@ -52,10 +52,10 @@ class Creature(Figure):
     
     uniqueId = 0
 
-    def __init__(self, grid, pos, energy):
+    def __init__(self, grid, pos, energy, genome):
         super().__init__()
         self._pos = np.array(pos)
-        self._genome = Genome()
+        self._genome = genome
         self._grid = grid
 
         self.food = None
@@ -86,8 +86,8 @@ class Creature(Figure):
 
         self.spotFood()
         self.spotCreatures()
-        self.spotPredators()
-        self.spotFriends()
+        #self.spotPredators()
+        #self.spotFriends()
         
         foodCosts = self.costsFood()
         creatureCosts = self.costsCreatures()
@@ -101,12 +101,12 @@ class Creature(Figure):
         finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + scentCosts + self.distanceCosts
 
         # Only preys needs to flee predators
-        if not self.genome.genes['predator'].value:
-            # Blur matrix to avoid creature from moving to food next to a threat
-            predatorCosts = self.costsPredators()
-            predatorCosts = gaussian_filter(predatorCosts, sigma=0.5, mode="nearest")
-
-            finalCosts += predatorCosts
+        #if not self.genome.genes['predator'].value:
+        #    # Blur matrix to avoid creature from moving to food next to a threat
+        #    predatorCosts = self.costsPredators()
+        #    predatorCosts = gaussian_filter(predatorCosts, sigma=0.5, mode="nearest")
+        #
+        #    finalCosts += predatorCosts
 
         # Avoid staying at the same place
         finalCosts[self.pfSize, self.pfSize] = 1
@@ -167,7 +167,7 @@ class Creature(Figure):
             # Spawn creature when cell is free
             if (free[i,j]):
                 nChildrenActual += 1
-                Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim)
+                Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim, self._genome.mutate(0.05))
                 # Break loop when right amount of children is reached
                 if (nChildrenActual == nChildrenAim):
                     break
