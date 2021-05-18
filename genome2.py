@@ -1,6 +1,8 @@
 from operator import attrgetter
 import numpy as np
 import math
+from scipy.stats import norm
+
 
 class Genome:
     rg =  np.random.default_rng()
@@ -17,20 +19,32 @@ class Genome:
     }
 
     def __init__(self, genes = None):
-        self.genes = genes if genes else self.rg.random(len(self.attributes))
+        self.genes = genes if  np.any(genes) else self.rg.random(len(self.attributes))
 
     def getAttrValue(self, name):
         attr = self.attributes[name]
         return self.express(self.genes[attr.gen], attr['min'], attr['max'])
 
-    @staticmethod
+    @ staticmethod
     def mutate(genes, strength):
         mutated = genes + Genome.rg.uniform(low=-strength/2, high=strength, size=Genome.nGenes)
 
         return mutated
 
-    @staticmethod
-    def express(value, min, max):
-        L = max - max
-        x_0 = (max + min) / 2
-        return L / ( 1 + math.exp(1*(value-x_0)))
+    # @ staticmethod
+    # def express(value, min, max):
+    #     L = max - max
+    #     x_0 = (max + min) / 2
+    #     return L / ( 1 + math.exp(1*(value-x_0)))
+
+    def replicate(self, rate):
+        childGenes = self.genes + 2 * rate *  self.rg.random(len(self.attributes)) - rate
+        return Genome(self.express(childGenes))
+
+
+    @ staticmethod
+    def express(x):
+        return norm.cdf(x, loc=0, scale=0.2)
+        # L = max - min
+        # x_0 = (max + min) / 2
+        # return L / ( 1 + math.exp(1*(value-x_0)))
