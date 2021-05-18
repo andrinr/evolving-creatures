@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.cm as cm
-import random
 # from scipy.sparse import random
 from creature import Creature, Food
 from itertools import product
@@ -9,7 +7,7 @@ from genome2 import Genome
 class Grid:
 
     #Ghost zone should be bigger than Creature.perceptionFieldSize
-    ghostZone = 6
+    ghostZone = 10
 
     def __init__(self, N, creatureDensity, initFoodDensity, dtfoodDenstiy):
         self.creatureList = []
@@ -24,7 +22,7 @@ class Grid:
 
         self.creatureGrid = np.zeros(self.outerGridShape, dtype=object)
 
-        self.topography = np.full(self.outerGridShape, 10, dtype=float)
+        self.topography = np.full(self.outerGridShape, 1000, dtype=float)
         self.topography[self.innerGridSlice] = 0
 
         # Each creature leave behind a scent, avoids creature to make repetitive moves
@@ -51,13 +49,14 @@ class Grid:
         self.histCreatures.append(len(self.creatureList))
         self.histFood.append(np.count_nonzero(self.foodGrid))
 
-    def plotAll(self, axl, axPf, axFood):
+    def plotAll(self, axl, axPf, axFood, axGen1):
         # Could be parallelized
         # mayube using numpy vectorize?
         for creature in self.creatureList:
 
             axl.scatter(creature.y, creature.x, s=creature.energy*10, c="red")
-   
+
+            axGen1.scatter(creature.genome.get('breedThreeshold'), creature.genome.get('energyChildrenRatio'))
 
             #axl.annotate(creature.id, (creature.y, creature.x), c='black')
 

@@ -2,7 +2,7 @@ import numpy as np
 from helpers import normalize, sRound, closestPoint
 from scipy.ndimage import gaussian_filter
 from itertools import product, combinations
-from genome import Genome
+from genome2 import Genome
 
 class Figure(object):
 
@@ -81,7 +81,6 @@ class Creature(Figure):
     def __str__(self):
         return 'Creature ID. = {}\nEnergyLevel = {}\n'.format(self.id, self.energy)
 
-
     def update(self):
 
         self.spotFood()
@@ -122,7 +121,7 @@ class Creature(Figure):
             self.eatFood()
 
         # TODO: define this by genes
-        if self.energy > 3.0:
+        if self.energy > self._genome.get('breedThreeshold')*10:
             self.breed()
 
         
@@ -160,21 +159,20 @@ class Creature(Figure):
         # All instances where there is no other creature
         free = adj == 0
         # Set the aim of new children, limited by the avaiable space
-        nChildrenAim = min(self.rg.integers(1, high=4), np.count_nonzero(free))
+        nChildrenAim = min(self._genome.get('energyChildrenRatio')*self.energy, np.count_nonzero(free))
         nChildrenActual = 0
-        
+
         for i, j in combinations(range(3), 2):
             # Spawn creature when cell is free
             if (free[i,j]):
+                if (nChildrenActual == nChildrenAim):
+                    break
                 nChildrenActual += 1
                 Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim, self._genome.mutate(0.05))
                 # Break loop when right amount of children is reached
-                if (nChildrenActual == nChildrenAim):
-                    break
             
         self.kill()
 
-            
 
 # =============================================================================
 # perception
@@ -197,7 +195,7 @@ class Creature(Figure):
 
     def spotCreatures(self):
         self.creatures = self.perceptualField(self._grid.creatureGrid)
-        # Make sure self is counted as other creature # is this necessary? can a creature stay at the same position?
+        # Make sure self is counted as other creature # is this necessary? can a creature stay at the same position? 
         self.creatures[self.pfSize, self.pfSize] = 0
 
     def spotPredators(self):
@@ -248,10 +246,6 @@ class Creature(Figure):
 # =============================================================================
 # getters
 # =============================================================================
-    @ property
-    def deathRate(self):
-        return self._genome[3]
-
     @ property 
     def genome(self):
          return self._genome
@@ -264,22 +258,6 @@ class Creature(Figure):
     def id(self):
         return self._id
 
-    @ property 
-    def moveToEnemy(self):
-        return self._genome[1]
-
-    @ property 
-    def moveToFriend(self):
-        return self._genome[2]
-
-    @ property 
-    def moveToPlant(self):
-         return self._genome[0]
-
-    @ property
-    def replicationRate(self):
-        return self._genome[4]
-
     @ property
     def x(self):
         return self._pos[0]
@@ -287,28 +265,3 @@ class Creature(Figure):
     @ property
     def y(self):
         return self._pos[1]
-
-# =============================================================================
-# setters
-# =============================================================================
-    @ deathRate.setter
-    def deathRate(self, p):
-        self._genome[3] = p
-
-    @ moveToEnemy.setter
-    def moveToEnemy(self, p):
-        self._genome[1] = p
-
-    @ moveToFriend.setter
-    def moveToFriend(self, p):
-        self._genome[2] = p
-
-    @ moveToPlant.setter
-    def moveToPlant(self, p):
-        self._genome[0] = p
-
-    @ replicationRate.setter
-    def replicationRate(self, p):
-        self._genome[4] = p
-
-

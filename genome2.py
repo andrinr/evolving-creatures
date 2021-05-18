@@ -17,13 +17,14 @@ class Genome:
         'friendlyCosts',
         'friendlyBlur',
         'breedThreeshold',
-        'breedMax'
+        'energyChildrenRatio'
     ]
 
     def __init__(self, genes = None):
-        self.genes = genes if np.any(genes) else self.rg.random(len(self.names))
+        self.genes = genes if np.any(genes) else\
+            self.rg.uniform(size=len(self.names))
 
-    def getGen(self, name):
+    def get(self, name):
         index = self.names.index(name, 0, len(self.names))
         return self.genes[index]
 

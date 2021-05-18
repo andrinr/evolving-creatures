@@ -5,7 +5,7 @@ from grid import Grid
 import time
 # Parameters
 NFRAMES = 10000
-SUBFRAMES = 10
+SUBFRAMES = 50
 GRIDSIZE = 100
 
 grid = Grid(GRIDSIZE, 0.001, 0.03, 0.0002)
@@ -15,8 +15,9 @@ print("number of creatures: ", len(grid.creatureList))
 fig = plt.figure(constrained_layout=True)
 gs = fig.add_gridspec(4, 3)
 axLeft = fig.add_subplot(gs[:,0:2])
-axPf = fig.add_subplot(gs[0,2])
+axPf = fig.add_subplot(gs[0,2:3])
 axFood = fig.add_subplot(gs[1,2:3])
+axGen1 = fig.add_subplot(gs[2,2:4])
 
 iteration = 0
 def update(f):
@@ -36,9 +37,10 @@ def update(f):
     axLeft.clear()
     axPf.clear()
     axFood.clear()
+    axGen1.clear()
     axLeft.set_xlim(0,GRIDSIZE+2*Grid.ghostZone)
     axLeft.set_ylim(GRIDSIZE+2*Grid.ghostZone,0)
-    grid.plotAll(axLeft, axPf, axFood)
+    grid.plotAll(axLeft, axPf, axFood, axGen1)
     end = time.perf_counter()
     elapsed = end - start
 
