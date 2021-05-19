@@ -43,10 +43,10 @@ class Food(Figure):
 
 class Creature(Figure):
     # Static
-    costsPerUnitMove = 0.01
+    costsPerUnitMove = 0.05
     genomThreshold = 0.2
-    deathProb = 0.003
-    maxEnery = 5
+    deathProb = 0.01
+    maxEnergy = 10
     pfSize = 5
     pfShape = [pfSize, pfSize]
     distanceCosts = np.zeros((pfSize*2+1, pfSize*2+1))
@@ -67,6 +67,8 @@ class Creature(Figure):
         self.congener = None
         self.finalCosts = 0
 
+        #self.pfSize = int(self._genome.get('size'))
+
         self._grid.creatureList.append(self)
         self._grid.creatureGrid[self.gridIndex] = self
 
@@ -74,8 +76,8 @@ class Creature(Figure):
 
         # Assuming all creatures have the same perceptualFieldSize
         # We calculate this here to save computing costs
-        if not self.uniqueId:
-            self.costsDistances()
+        #if not self.uniqueId:
+        self.costsDistances()
 
         self._id = Creature.uniqueId
         Creature.uniqueId += 1
@@ -91,13 +93,13 @@ class Creature(Figure):
 
         self.spotFood()
         self.spotCreatures()
-        #self.spotPredators()
-        #self.spotFriends()
+        self.spotEnemies()
+        self.spotFriends()
         
         foodCosts = self.costsFood()
         creatureCosts = self.costsCreatures()
-        # enCosts = self.costsEnemies()
-        # frCosts = self.costsFriends()
+        enCosts = self.costsEnemies()
+        frCosts = self.costsFriends()
         randomCosts = self.costsRandom(0.02)
         topoCosts = self.perceptualField(self._grid.topography)
 
@@ -126,7 +128,6 @@ class Creature(Figure):
         if self._grid.foodGrid[self.gridIndex]:
             self.eatFood()
 
-        # TODO: define this by genes
         if self.energy > self._genome.get('energyChildrenThreshold') and self._grid.checkBounds(self.x, self.y):
             self.breed()
 
@@ -136,7 +137,7 @@ class Creature(Figure):
 # actions
 # =============================================================================
     def eatFood(self):
-        self._energy = min(self._grid.foodGrid[self.gridIndex].energy + self.energy, self._genome.get('size'))
+        self._energy = min(self._grid.foodGrid[self.gridIndex].energy + self.energy, self.maxEnergy)
         self._grid.foodGrid[self.gridIndex] = 0
 
     def eatEnemy(self):
@@ -176,7 +177,8 @@ class Creature(Figure):
                 if (nChildrenActual >= nChildrenAim):
                     break
                 nChildrenActual += 1
-                Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim, self._genome.mutate(0.1))
+                # Each child receives energy penalty
+                Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim-0.1, self._genome.mutate(0.03))
 
 
 # =============================================================================
@@ -205,14 +207,11 @@ class Creature(Figure):
             print(self.x, self.y)
         self.creatures[self.pfSize, self.pfSize] = 0
 
-    def spotPredators(self):
+    def spotEnemies(self):
         e = self.creatures.copy()
         n = e.shape[0]
         for i, j in product(range(n), range(n)):
-            if e[i,j] and e[i,j].genome.genes['predator'].value * self.genome.genes['predator'].value > 0:
-                # in this case the creature is not an enemy since enemies have 
-                # different signs hence the product is always positive if two 
-                # creatures are of the same species
+            if e[i,j] and e[i,j].genome.difference(self.genome) < 0.2:
                 e[i,j] = 0
         self.enemies = e
 
@@ -235,7 +234,7 @@ class Creature(Figure):
         # Normalize
         self.distanceCosts /= np.linalg.norm(np.array(self.pfShape))
 
-    def costsPredators(self):
+    def costsEnemies(self):
         return (self.enemies != 0).astype(int) * 10
 
     def costsFood(self):
@@ -245,7 +244,7 @@ class Creature(Figure):
         return (self.friends != 0).astype(int) * 10
 
     def costsMove(self, path):
-        return np.linalg.norm(path)*self.costsPerUnitMove*self._genome.get('size')
+        return np.linalg.norm(path)*self.costsPerUnitMove
 
     def costsRandom(self, factor):
         return self.rg.random(np.shape(self.distanceCosts)) * factor

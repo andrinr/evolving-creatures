@@ -54,11 +54,11 @@ class Grid:
         # mayube using numpy vectorize?
         for creature in self.creatureList:
 
-            axl.scatter(creature.y, creature.x, s=creature.energy*10, c="red", marker=',')
+            axl.scatter(creature.y, creature.x, s=1, c="red", marker=',')
 
-            axGen1.scatter(creature.genome.get('energyChildrenThreshold'), creature.genome.get('energyChildrenRatio'), marker=',')
+            axGen1.scatter(creature.genome.get('energyChildrenThreshold'), creature.genome.get('energyChildrenRatio'),s=1, marker=',')
 
-            axGen2.scatter(creature.genome.get('size'), creature.genome.get('energyChildrenRatio'), marker=',')
+            #axGen2.scatter(creature.genome.get('size'), creature.genome.get('energyChildrenRatio'), marker=',')
 
             #axl.annotate(creature.id, (creature.y, creature.x), c='black')
 
@@ -81,6 +81,3 @@ class Grid:
             return False
 
         return True
-        
-
-    

@@ -11,9 +11,10 @@ class Genome:
     rg =  np.random.default_rng()
     # name, min, max
     properties = np.array([
-        ['size', 1, 20],
         ['energyChildrenRatio', 0.1, 5],
-        ['energyChildrenThreshold', 1, 10]
+        ['energyChildrenThreshold', 0.3, 10],
+        ['toEnemies', -3, 3],
+        ['toFriends', -3, 3]
     ])
 
     def __init__(self, genes = None):
@@ -30,6 +31,9 @@ class Genome:
     def mutate(self, strength):
         mutated = self.genes + Genome.rg.uniform(low=-strength/2, high=strength/2, size=len(self.genes))
         return Genome(mutated)
+
+    def difference(self, other):
+        return np.linalg.norm(self.genes-other.genes)
 
     @ staticmethod
     def range(value, low, high):

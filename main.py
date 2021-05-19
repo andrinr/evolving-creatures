@@ -11,7 +11,7 @@ GRIDSIZE = 120
 EPOCHS = 1000
 TIMEPEREPOCH = 100
 
-grid = Grid(GRIDSIZE, 0.009, 0.015, 0.0002)
+grid = Grid(GRIDSIZE, 0.01, 0.015, 0.0002)
 
 print("number of creatures: ", len(grid.creatureList))
 
