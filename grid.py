@@ -30,7 +30,7 @@ class Grid:
 
         for i, j in product(range(Grid.ghostZone, N+Grid.ghostZone), range(Grid.ghostZone, N+Grid.ghostZone)):
             if (self.__rg.random() < creatureDensity):
-                Creature(self, [i, j], 0.5, Genome())
+                Creature(self, [i, j], 1.0, Genome())
 
         self.histCreatures = []
         self.histFood = []
@@ -49,14 +49,16 @@ class Grid:
         self.histCreatures.append(len(self.creatureList))
         self.histFood.append(np.count_nonzero(self.foodGrid))
 
-    def plotAll(self, axl, axPf, axFood, axGen1):
+    def plotAll(self, axl, axPf, axFood, axGen1, axGen2):
         # Could be parallelized
         # mayube using numpy vectorize?
         for creature in self.creatureList:
 
-            axl.scatter(creature.y, creature.x, s=creature.energy*10, c="red")
+            axl.scatter(creature.y, creature.x, s=creature.energy*10, c="red", marker=',')
 
-            axGen1.scatter(creature.genome.get('breedThreeshold'), creature.genome.get('energyChildrenRatio'))
+            axGen1.scatter(creature.genome.get('energyChildrenThreshold'), creature.genome.get('energyChildrenRatio'), marker=',')
+
+            axGen2.scatter(creature.genome.get('size'), creature.genome.get('energyChildrenRatio'), marker=',')
 
             #axl.annotate(creature.id, (creature.y, creature.x), c='black')
 

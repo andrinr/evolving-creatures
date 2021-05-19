@@ -43,8 +43,10 @@ class Food(Figure):
 
 class Creature(Figure):
     # Static
-    costsPerUnitMove = 0.07
+    costsPerUnitMove = 0.01
     genomThreshold = 0.2
+    deathProb = 0.003
+    maxEnery = 5
     pfSize = 5
     pfShape = [pfSize, pfSize]
     distanceCosts = np.zeros((pfSize*2+1, pfSize*2+1))
@@ -82,6 +84,10 @@ class Creature(Figure):
         return 'Creature ID. = {}\nEnergyLevel = {}\n'.format(self.id, self.energy)
 
     def update(self):
+
+        if (self.rg.random() < self.deathProb):
+            self.kill()
+            return
 
         self.spotFood()
         self.spotCreatures()
@@ -121,7 +127,7 @@ class Creature(Figure):
             self.eatFood()
 
         # TODO: define this by genes
-        if self.energy > (self._genome.get('breedThreeshold')*10 + 5) and self._grid.checkBounds(self.x, self.y):
+        if self.energy > self._genome.get('energyChildrenThreshold') and self._grid.checkBounds(self.x, self.y):
             self.breed()
 
         
@@ -130,7 +136,7 @@ class Creature(Figure):
 # actions
 # =============================================================================
     def eatFood(self):
-        self._energy += self._grid.foodGrid[self.gridIndex].energy
+        self._energy = min(self._grid.foodGrid[self.gridIndex].energy + self.energy, self._genome.get('size'))
         self._grid.foodGrid[self.gridIndex] = 0
 
     def eatEnemy(self):
@@ -159,7 +165,7 @@ class Creature(Figure):
         # All instances where there is no other creature
         free = adj == 0
         # Set the aim of new children, limited by the avaiable space
-        nChildrenAim = min(self._genome.get('energyChildrenRatio')*self.energy, np.count_nonzero(free))
+        nChildrenAim = min(int(self._genome.get('energyChildrenRatio')*self.energy), np.count_nonzero(free))
         nChildrenActual = 0
 
         self.kill()
@@ -167,11 +173,10 @@ class Creature(Figure):
         for i, j in combinations(range(3), 2):
             # Spawn creature when cell is free
             if (free[i,j]):
-                if (nChildrenActual == nChildrenAim):
+                if (nChildrenActual >= nChildrenAim):
                     break
                 nChildrenActual += 1
                 Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim, self._genome.mutate(0.1))
-                # Break loop when right amount of children is reached
 
 
 # =============================================================================
@@ -240,7 +245,7 @@ class Creature(Figure):
         return (self.friends != 0).astype(int) * 10
 
     def costsMove(self, path):
-        return np.linalg.norm(path)*self.costsPerUnitMove
+        return np.linalg.norm(path)*self.costsPerUnitMove*self._genome.get('size')
 
     def costsRandom(self, factor):
         return self.rg.random(np.shape(self.distanceCosts)) * factor

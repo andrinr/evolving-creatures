@@ -6,9 +6,12 @@ import time
 # Parameters
 NFRAMES = 10000
 SUBFRAMES = 200
-GRIDSIZE = 100
+GRIDSIZE = 120
 
-grid = Grid(GRIDSIZE, 0.001, 0.03, 0.0002)
+EPOCHS = 1000
+TIMEPEREPOCH = 100
+
+grid = Grid(GRIDSIZE, 0.009, 0.015, 0.0002)
 
 print("number of creatures: ", len(grid.creatureList))
 
@@ -18,6 +21,7 @@ axLeft = fig.add_subplot(gs[:,0:2])
 axPf = fig.add_subplot(gs[0,2:3])
 axFood = fig.add_subplot(gs[1,2:3])
 axGen1 = fig.add_subplot(gs[2,2:4])
+axGen2 = fig.add_subplot(gs[3,2:4])
 
 iteration = 0
 def update(f):
@@ -38,9 +42,10 @@ def update(f):
     axPf.clear()
     axFood.clear()
     axGen1.clear()
+    axGen2.clear()
     axLeft.set_xlim(0,GRIDSIZE+2*Grid.ghostZone)
     axLeft.set_ylim(GRIDSIZE+2*Grid.ghostZone,0)
-    grid.plotAll(axLeft, axPf, axFood, axGen1)
+    grid.plotAll(axLeft, axPf, axFood, axGen1, axGen2)
     end = time.perf_counter()
     elapsed = end - start
 

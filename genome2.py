@@ -1,6 +1,7 @@
 from operator import attrgetter
 import numpy as np
 from scipy.stats import norm
+import math
 
 # Rationale:
 # Another creature is considered an enemy if:
@@ -8,35 +9,35 @@ from scipy.stats import norm
 # 
 class Genome:
     rg =  np.random.default_rng()
-    names = [
-        'size',
-        'aggression',
-        'aggressionThreeshold',
-        'enemyCosts',
-        'enemyBlur',
-        'friendlyCosts',
-        'friendlyBlur',
-        'breedThreeshold',
-        'energyChildrenRatio'
-    ]
+    # name, min, max
+    properties = np.array([
+        ['size', 1, 20],
+        ['energyChildrenRatio', 0.1, 5],
+        ['energyChildrenThreshold', 1, 10]
+    ])
 
     def __init__(self, genes = None):
         self.genes = genes if np.any(genes) else\
-            self.rg.uniform(size=len(self.names))
+            self.rg.uniform(size=len(self.properties))
 
     def get(self, name):
-        index = self.names.index(name, 0, len(self.names))
-        return self.genes[index]
+        index = np.where(self.properties[:,0] == name)[0][0]
+        value = self.genes[index]
+        low = float(self.properties[index,1])
+        high = float(self.properties[index,2])
+        return self.range(value, low, high)
 
     def mutate(self, strength):
-        mutated = self.genes + Genome.rg.uniform(low=-strength/2, high=strength, size=len(self.genes))
+        mutated = self.genes + Genome.rg.uniform(low=-strength/2, high=strength/2, size=len(self.genes))
         return Genome(mutated)
 
-    # @ staticmethod
-    # def express(value, min, max):
-    #     L = max - max
-    #     x_0 = (max + min) / 2
-    #     return L / ( 1 + math.exp(1*(value-x_0)))
+    @ staticmethod
+    def range(value, low, high):
+        # Logistic equation to limit in fixed range
+        l = high - low
+        x_0 = 0.5
+        k = 10.
+        return low + l / ( 1.0 + math.exp(-k*(value-x_0)))
 
     def replicate(self, rate):
         childGenes = self.genes + 2 * rate *  self.rg.random(len(self.attributes)) - rate
