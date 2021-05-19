@@ -5,7 +5,7 @@ from grid import Grid
 import time
 # Parameters
 NFRAMES = 10000
-SUBFRAMES = 50
+SUBFRAMES = 200
 GRIDSIZE = 100
 
 grid = Grid(GRIDSIZE, 0.001, 0.03, 0.0002)
@@ -45,6 +45,7 @@ def update(f):
     elapsed = end - start
 
     print('plot performance time(s): ', elapsed)
+    print("number of creatures: ", len(grid.creatureList))
 
     print("current itartion number: ", iteration)
     return

@@ -121,7 +121,7 @@ class Creature(Figure):
             self.eatFood()
 
         # TODO: define this by genes
-        if self.energy > self._genome.get('breedThreeshold')*10:
+        if self.energy > (self._genome.get('breedThreeshold')*10 + 5) and self._grid.checkBounds(self.x, self.y):
             self.breed()
 
         
@@ -162,16 +162,16 @@ class Creature(Figure):
         nChildrenAim = min(self._genome.get('energyChildrenRatio')*self.energy, np.count_nonzero(free))
         nChildrenActual = 0
 
+        self.kill()
+
         for i, j in combinations(range(3), 2):
             # Spawn creature when cell is free
             if (free[i,j]):
                 if (nChildrenActual == nChildrenAim):
                     break
                 nChildrenActual += 1
-                Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim, self._genome.mutate(0.05))
+                Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim, self._genome.mutate(0.1))
                 # Break loop when right amount of children is reached
-            
-        self.kill()
 
 
 # =============================================================================
@@ -196,6 +196,8 @@ class Creature(Figure):
     def spotCreatures(self):
         self.creatures = self.perceptualField(self._grid.creatureGrid)
         # Make sure self is counted as other creature # is this necessary? can a creature stay at the same position? 
+        if np.shape(self.creatures)[0] == 0:
+            print(self.x, self.y)
         self.creatures[self.pfSize, self.pfSize] = 0
 
     def spotPredators(self):

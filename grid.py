@@ -16,7 +16,7 @@ class Grid:
         self.outerGridShape = (N+self.ghostZone*2, N+self.ghostZone*2)
         self.innerGridShape = (N,N)
         self.innerGridSlice = (slice(self.ghostZone, N+self.ghostZone),slice(self.ghostZone, N+self.ghostZone))
-
+        self.N = N
         self.foodGrid = np.zeros(self.outerGridShape, dtype=object)
         self.foodGrid[self.innerGridSlice] = (self.__rg.random(self.innerGridShape).astype(float) < initFoodDensity).astype(int) * Food()
 
@@ -30,7 +30,7 @@ class Grid:
 
         for i, j in product(range(Grid.ghostZone, N+Grid.ghostZone), range(Grid.ghostZone, N+Grid.ghostZone)):
             if (self.__rg.random() < creatureDensity):
-                Creature(self, [i, j], 1.0, Genome())
+                Creature(self, [i, j], 0.5, Genome())
 
         self.histCreatures = []
         self.histFood = []
@@ -67,9 +67,18 @@ class Grid:
             axPf.imshow(self.creatureList[0].finalCosts.astype(float), vmin=0, vmax=1.2, cmap='magma')
             axPf.set_title("PF ID: " + str(self.creatureList[0]._id))
 
-        axFood.plot(range(len(self.histFood)), self.histFood, c="green")
-        axFood.plot(range(len(self.histCreatures)), self.histCreatures, c="red")
+        axFood.plot(range(min(len(self.histFood),1000)), self.histFood[-1000:None], c="green")
+        axFood.plot(range(min(len(self.histCreatures),1000)), self.histCreatures[-1000:None], c="red")
+    
+    def checkBounds(self, x, y):
+        N = self.N
+        gz = self.ghostZone
+        if x < gz or x > N + gz:
+            return False
+        if y < gz or y > N + gz:
+            return False
 
+        return True
         
 
     
