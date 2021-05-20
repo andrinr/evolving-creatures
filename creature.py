@@ -2,7 +2,7 @@ import numpy as np
 from helpers import normalize, sRound, closestPoint
 from scipy.ndimage import gaussian_filter
 from itertools import product, combinations
-from genome2 import Genome
+from genome import Genome
 
 class Figure(object):
 
@@ -87,7 +87,7 @@ class Creature(Figure):
 
     def update(self):
 
-        if (self.rg.random() < self.deathProb):
+        if self.rg.random() < self.deathProb or self._energy <= 0:
             self.kill()
             return
 
@@ -120,17 +120,29 @@ class Creature(Figure):
         # Store final costs for plotting
         self.finalCosts = finalCosts
 
+        # Target is postions of minimum of all costs
         target = np.unravel_index(finalCosts.argmin(), finalCosts.shape) - np.array([self.pfSize, self.pfSize])
+        # only allow single grid cell movements
         move = sRound(normalize(target))
+        # Apply move
         self.moveBy(move)
+
+        # Make scent trail
         self._grid.scent[self.gridIndex] += 0.3
 
+        # Eat food when on top
         if self._grid.foodGrid[self.gridIndex]:
             self.eatFood()
+        
+        # TODO: interact with enemy when close
+        #r = self.pfSize
+        #if self.enemies[r-1:r+1,r-1:r+1].nonzero()
 
+        # TODO: interact with friend when close
+
+        # Check if creature will breed
         if self.energy > self._genome.get('energyChildrenThreshold') and self._grid.checkBounds(self.x, self.y):
             self.breed()
-
         
 
 # =============================================================================
@@ -140,7 +152,8 @@ class Creature(Figure):
         self._energy = min(self._grid.foodGrid[self.gridIndex].energy + self.energy, self.maxEnergy)
         self._grid.foodGrid[self.gridIndex] = 0
 
-    def eatEnemy(self):
+    def attackEnemy(self):
+        self.energy -= 0.1
         pass
 
     def kill(self):
@@ -150,9 +163,6 @@ class Creature(Figure):
     # Move self, update grid data structure and energylevel
     def moveBy(self, vector):
         self._energy -= self.costsMove(vector)
-        if self._energy <= 0:
-            self.kill()
-            return
         self._grid.creatureGrid[self.gridIndex] = 0
         self._pos = self._pos + vector
         self._grid.creatureGrid[self.gridIndex] = self
@@ -166,7 +176,7 @@ class Creature(Figure):
         # All instances where there is no other creature
         free = adj == 0
         # Set the aim of new children, limited by the avaiable space
-        nChildrenAim = min(int(self._genome.get('energyChildrenRatio')*self.energy), np.count_nonzero(free))
+        nChildrenAim = min(int(self._genome.get('nChildren')), np.count_nonzero(free))
         nChildrenActual = 0
 
         self.kill()
@@ -178,7 +188,7 @@ class Creature(Figure):
                     break
                 nChildrenActual += 1
                 # Each child receives energy penalty
-                Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim-0.1, self._genome.mutate(0.03))
+                Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim-0.1, self._genome.mutate(0.1))
 
 
 # =============================================================================
@@ -235,13 +245,19 @@ class Creature(Figure):
         self.distanceCosts /= np.linalg.norm(np.array(self.pfShape))
 
     def costsEnemies(self):
-        return (self.enemies != 0).astype(int) * 10
+        costs = (self.enemies != 0).astype(int) * self._genome.get('toEnemies')
+        blured = gaussian_filter(costs,sigma=self._genome.get('toEnemiesRadius'), mode="nearest")
+        rmCenter = blured[self.pfSize, self.pfSize] = 0
+        return rmCenter
 
     def costsFood(self):
         return -(self.food != 0).astype(int)
 
     def costsFriends(self):
-        return (self.friends != 0).astype(int) * 10
+        costs = (self.enemies != 0).astype(int) * self._genome.get('toFriends')
+        blured = gaussian_filter(costs,sigma=self._genome.get('toFriendsRadius'), mode="nearest")
+        rmCenter = blured[self.pfSize, self.pfSize] = 0
+        return rmCenter
 
     def costsMove(self, path):
         return np.linalg.norm(path)*self.costsPerUnitMove

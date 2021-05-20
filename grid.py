@@ -2,7 +2,7 @@ import numpy as np
 # from scipy.sparse import random
 from creature import Creature, Food
 from itertools import product
-from genome2 import Genome
+from genome import Genome
 
 class Grid:
 
@@ -56,11 +56,13 @@ class Grid:
 
             axl.scatter(creature.y, creature.x, s=1, c="red", marker=',')
 
-            axGen1.scatter(creature.genome.get('energyChildrenThreshold'), creature.genome.get('energyChildrenRatio'),s=1, marker=',')
+            axGen1.scatter(creature.genome.get('energyChildrenThreshold'), creature.genome.get('nChildren'),s=1, marker=',')
 
             #axGen2.scatter(creature.genome.get('size'), creature.genome.get('energyChildrenRatio'), marker=',')
 
             #axl.annotate(creature.id, (creature.y, creature.x), c='black')
+
+        axGen1.set_title('energyChildrenThreshold (x) vs nChildren (y)')
 
         # Plot food
         axl.imshow(self.foodGrid != 0, origin='upper', cmap="Greens")

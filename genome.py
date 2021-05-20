@@ -1,169 +1,55 @@
+from operator import attrgetter
 import numpy as np
-from random import choice
+from scipy.stats import norm
+import math
 
-
-class Allele:
-
-    def __init__(self, dominance, val, description):
-        self.__dominant = dominance # bool
-        self.__value = val
-        self.__description = description
-
-    def __str__(self):
-        return self.__description
-
-    @ property
-    def description(self):
-        return self.__description
-
-    @ property
-    def dominant(self):
-        return self.__dominant
-
-    @ property
-    def value(self):
-        return self.__value
-
-
-class Gene:
-
-    def __init__(self, alleleM, alleleF, name):
-        self.__alleleF = alleleF
-        self.__alleleM = alleleM
-        self.__value = 0
-        self.__phenotype = ''
-        self.__name = name
-        self.__getPhen()
-    
-    def __str__(self):
-        return 'Gene Nr.:{}\nPhenotype: {}\n alleleM: {}\n alleleF: {}'.format(self.name, 
-                                                                               self.__phenotype, 
-                                                                               self.__alleleM,
-                                                                               self.__alleleF)
-
-    def __getPhen(self):
-        if self.__alleleF.dominant == self.__alleleM.dominant:
-            self.__value = .5 * (self.__alleleF.value + self.__alleleM.value)  # or better max, min??
-            self.__phenotype = self.__alleleM.description
-
-        elif self.__alleleF.dominant:
-            self.__value = self.__alleleF.value
-            self.__phenotype = self.__alleleF.description
-
-        else:
-            self.__value = self.__alleleM.value
-            self.__phenotype = self.__alleleM.description
-
-    @ property
-    def alleleF(self):
-        return self.__alleleF
-
-    @ property
-    def alleleM(self):
-        return self.__alleleM
-
-    @ property
-    def name(self):
-        return self.__name
-
-    @ property
-    def phenotype(self):
-        return self.__phenotype
-
-    @ property
-    def value(self):
-        return self.__value
-
-
-# Generally not sure if this does not overcomplicate things...
 class Genome:
+    rg =  np.random.default_rng()
+    # name, min, max
+    properties = np.array([
+        ['nChildren', 1, 15],
+        ['energyChildrenThreshold',1, 15],
+        ['toEnemies', -3, 3],
+        ['toEnemiesRadius', 1, 3],
+        ['toFriends', -3, 3],
+        ['toFriendsRadius', 1, 3]
+    ])
 
-    # {name of Gene1: ((phenotype1, dominance), (phenotype2, dominance)), ...}
-    # Maybe its better not to hardcode predator or prey, let each creature by the variation to the genes decide weather is a enemy or a friend
-    # Then interesting things can happen where a creature thinks the other one is a friend, but actually isnt etc.
-    # Also I dont understand why these parameters are already set at this point?
-    phenotypes = {'gene1':[['predator', False], ['prey',True]],
-                    # Is that meant to be sizeM, sizeF for mother and father?
-                  'gene2':[['sizeM', True],['sizeL', False]],
-                    # Changes in perceptual fields cannot be encoded, since a bigger perceptual field will only lead to benefits
-                  'gene3':[['pFSizeM', False], ['pfSizeL', True]], 
-                  'gene4':[['aggressive', False], ['peaceful', True]]}
+    def __init__(self, genes = None):
+        self.genes = genes if np.any(genes) else\
+            self.rg.uniform(size=len(self.properties))
 
-    def __init__(self, genes=None, replication=False):
-        # if we build a genome because of a replication we get the genes from the 
-        # fertilisation otherwise we need am empty list.
-        self.__genes = genes or []
-        if not replication:
-            self.randomGenes()
-        self.__n = len(self.__genes)
+    def get(self, name):
+        index = np.where(self.properties[:,0] == name)[0][0]
+        value = self.genes[index]
+        low = float(self.properties[index,1])
+        high = float(self.properties[index,2])
+        return self.range(value, low, high)
 
-    def randomGenes(self):
-        for name, types in self.phenotypes.items():
-            alleles = []
-            for _ in (1,2):
-                phene = choice(types)
-                # dominant alleles receive a positive random value in [0,1]
-                if phene[1]:
-                    alleles.append(Allele(phene[1], np.random.random(), phene[0]))
-                # rezessive alleles treceive a negative random value
-                else:
-                    alleles.append(Allele(phene[1], -np.random.random(), phene[0]))
-            self.__genes.append(Gene(alleles[0], alleles[1], name))
+    def mutate(self, strength):
+        mutated = self.genes + Genome.rg.uniform(low=-strength/2, high=strength/2, size=len(self.genes))
+        return Genome(mutated)
 
-    @ property
-    def genes(self):
-        keys = ['predator', 'size', 'pfSize', 'aggression']
-        return dict(zip(keys, self.__genes))
+    def difference(self, other):
+        return np.linalg.norm(self.genes-other.genes)
 
-    @ property
-    def n(self):
-        return self.__n
+    @ staticmethod
+    def range(value, low, high):
+        # Logistic equation to limit in fixed range
+        return value * (high - low) + low 
+        l = high - low
+        x_0 = 0.5
+        k = 10.
+        return low + l / ( 1.0 + math.exp(-k*(value-x_0)))
 
-# =============================================================================
-# Replicfation
-# =============================================================================
-
-class CellDivision:
-
-    def __init__(self, genome):
-        self.__genome = genome
-        self.__father = np.array([gene.alleleF for gene in genome.genes])
-        self.__mother = np.array([gene.alleleM for gene in genome.genes])
-        self.__chromatids = self.__meiosis()
-
-    @ property
-    def chromatids(self):
-        return self.__chromatids
-
-    def __meiosis(self):
-        # generate 4 haploid 1-chromatid chhromosomes
-
-        chromatid11, chromatid12 = self.__father, self.__father
-        chromatid21, chromatid22 = self.__mother, self.__mother
-        return self.__crossingOver(chromatid11, chromatid12, chromatid21, chromatid22)
-
-    def __crossingOver(self, chr11, chr12, chr21, chr22):
-        # recombination of genetic information => genetic diversity
-
-        low1, up1 = np.sort(np.random.randint(self.__genome.n, size=2))
-        low2, up2 = np.sort(np.random.randint(self.__genome.n, size=2))
-
-        chr11[low1:up1], chr21[low1:up1] = chr21[low1:up1], chr11[low1:up1].copy()
-        chr12[low2:up2], chr22[low2:up2] = chr22[low2:up2], chr12[low2:up2].copy()
-
-        return chr11, chr12, chr21, chr22
-
-    def __mutation(self):
-        pass
+    def replicate(self, rate):
+        childGenes = self.genes + 2 * rate *  self.rg.random(len(self.attributes)) - rate
+        return Genome(self.express(childGenes))
 
 
-class Fertilisation:
-
-    def __init__(self, chromatidsF, chromatidsM):
-        self.__chromatidF = np.random.choice(chromatidsF)
-        self.__chromatidM = np.random.choice(chromatidsM)
-        self.__genome = Genome([Gene(aF, aM) for aF, aM in zip(self.__chromatidF, self.__chromatidM)])
-
-    @ property
-    def genome(self):
-        return self.__genome
+    @ staticmethod
+    def express(x):
+        return norm.cdf(x, loc=0, scale=0.2)
+        # L = max - min
+        # x_0 = (max + min) / 2
+        # return L / ( 1 + math.exp(1*(value-x_0)))
