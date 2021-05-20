@@ -1,3 +1,4 @@
+from operator import le
 import numpy as np
 from helpers import normalize, sRound, closestPoint
 from scipy.ndimage import gaussian_filter
@@ -45,7 +46,7 @@ class Creature(Figure):
     # Static
     costsPerUnitMove = 0.05
     genomThreshold = 0.2
-    deathProb = 0.01
+    deathProb = 0.02
     maxEnergy = 10
     pfSize = 5
     pfShape = [pfSize, pfSize]
@@ -59,6 +60,7 @@ class Creature(Figure):
         self._pos = np.array(pos)
         self._genome = genome
         self._grid = grid
+        self._isAllive = True
 
         self.food = None
         self.creatures = None
@@ -87,6 +89,9 @@ class Creature(Figure):
 
     def update(self):
 
+        if not self._isAllive:
+            return
+
         if self.rg.random() < self.deathProb or self._energy <= 0:
             self.kill()
             return
@@ -103,9 +108,9 @@ class Creature(Figure):
         randomCosts = self.costsRandom(0.02)
         topoCosts = self.perceptualField(self._grid.topography)
 
-        scentCosts = self.perceptualField(self._grid.scent)
+        #scentCosts = self.perceptualField(self._grid.scent)
 
-        finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + scentCosts + self.distanceCosts
+        finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + self.distanceCosts + enCosts
 
         # Only preys needs to flee predators
         #if not self.genome.genes['predator'].value:
@@ -128,15 +133,17 @@ class Creature(Figure):
         self.moveBy(move)
 
         # Make scent trail
-        self._grid.scent[self.gridIndex] += 0.3
+        #self._grid.scent[self.gridIndex] += 0.3
 
         # Eat food when on top
         if self._grid.foodGrid[self.gridIndex]:
             self.eatFood()
         
         # TODO: interact with enemy when close
-        #r = self.pfSize
-        #if self.enemies[r-1:r+1,r-1:r+1].nonzero()
+        r = self.pfSize
+        adjEnemies = (self.enemies[r-1:r+1,r-1:r+1])[np.nonzero(self.enemies[r-1:r+1,r-1:r+1] != 0)]
+        if len(adjEnemies) > 0:
+            self.attackEnemy(adjEnemies[self.rg.integers(0,high=len(adjEnemies))])
 
         # TODO: interact with friend when close
 
@@ -152,11 +159,17 @@ class Creature(Figure):
         self._energy = min(self._grid.foodGrid[self.gridIndex].energy + self.energy, self.maxEnergy)
         self._grid.foodGrid[self.gridIndex] = 0
 
-    def attackEnemy(self):
-        self.energy -= 0.1
+    def attackEnemy(self, enemy):
+        # Fight logic
+        if (self.energy > enemy.energy):
+            self._energy += enemy.energy
+            enemy.kill()
+        # Costs for attacking a creature
+        self._energy -= 0.1
         pass
 
     def kill(self):
+        self._isAllive = False
         self._grid.creatureList.remove(self)
         self._grid.creatureGrid[self.gridIndex] = 0
 
@@ -221,7 +234,9 @@ class Creature(Figure):
         e = self.creatures.copy()
         n = e.shape[0]
         for i, j in product(range(n), range(n)):
-            if e[i,j] and e[i,j].genome.difference(self.genome) < 0.2:
+            # Similar genome means the two creatures are friendly
+            pass
+            if e[i,j] and e[i,j].genome.difference(self.genome) < 0.1:
                 e[i,j] = 0
         self.enemies = e
 
@@ -245,8 +260,8 @@ class Creature(Figure):
         self.distanceCosts /= np.linalg.norm(np.array(self.pfShape))
 
     def costsEnemies(self):
-        costs = (self.enemies != 0).astype(int) * self._genome.get('toEnemies')
-        blured = gaussian_filter(costs,sigma=self._genome.get('toEnemiesRadius'), mode="nearest")
+        costs = (self.enemies != 0).astype(int) * self._genome.get('toEnemies') * 10
+        blured = gaussian_filter(costs,sigma=2, mode="nearest")
         rmCenter = blured[self.pfSize, self.pfSize] = 0
         return rmCenter
 
@@ -255,7 +270,7 @@ class Creature(Figure):
 
     def costsFriends(self):
         costs = (self.enemies != 0).astype(int) * self._genome.get('toFriends')
-        blured = gaussian_filter(costs,sigma=self._genome.get('toFriendsRadius'), mode="nearest")
+        blured = gaussian_filter(costs,sigma=1, mode="nearest")
         rmCenter = blured[self.pfSize, self.pfSize] = 0
         return rmCenter
 

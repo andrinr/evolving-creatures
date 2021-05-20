@@ -5,11 +5,8 @@ from grid import Grid
 import time
 # Parameters
 NFRAMES = 1000
-SUBFRAMES = 20
+SUBFRAMES = 1
 GRIDSIZE = 120
-
-EPOCHS = 1000
-TIMEPEREPOCH = 100
 
 grid = Grid(GRIDSIZE, 0.02, 0.1, 0.0008)
 

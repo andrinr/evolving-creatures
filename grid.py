@@ -58,11 +58,12 @@ class Grid:
 
             axGen1.scatter(creature.genome.get('energyChildrenThreshold'), creature.genome.get('nChildren'),s=1, marker=',')
 
-            #axGen2.scatter(creature.genome.get('size'), creature.genome.get('energyChildrenRatio'), marker=',')
+            axGen2.scatter(creature.genome.get('toEnemies'), creature.genome.get('toFriends'), marker=',')
 
             #axl.annotate(creature.id, (creature.y, creature.x), c='black')
 
         axGen1.set_title('energyChildrenThreshold (x) vs nChildren (y)')
+        axGen2.set_title('toEnemies (x) vs toFriend (y)')
 
         # Plot food
         axl.imshow(self.foodGrid != 0, origin='upper', cmap="Greens")

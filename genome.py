@@ -10,9 +10,7 @@ class Genome:
         ['nChildren', 1, 15],
         ['energyChildrenThreshold',1, 15],
         ['toEnemies', -3, 3],
-        ['toEnemiesRadius', 1, 3],
         ['toFriends', -3, 3],
-        ['toFriendsRadius', 1, 3]
     ])
 
     def __init__(self, genes = None):
