@@ -15,6 +15,10 @@ class Figure(object):
     def energy(self):
         return self._energy
 
+    @energy.setter
+    def energy(self, var):
+        self._energy = var
+
     @ property
     def color(self):
         return self._color
@@ -110,7 +114,7 @@ class Creature(Figure):
 
         #scentCosts = self.perceptualField(self._grid.scent)
 
-        finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + self.distanceCosts + enCosts
+        finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + self.distanceCosts + enCosts + frCosts
 
         # Only preys needs to flee predators
         #if not self.genome.genes['predator'].value:
@@ -146,6 +150,9 @@ class Creature(Figure):
             self.attackEnemy(adjEnemies[self.rg.integers(0,high=len(adjEnemies))])
 
         # TODO: interact with friend when close
+        adjFriends = (self.friends[r-1:r+1,r-1:r+1])[np.nonzero(self.friends[r-1:r+1,r-1:r+1] != 0)]
+        if len(adjFriends) > 0:
+            self.tradeFriend(adjFriends[self.rg.integers(0,high=len(adjFriends))])
 
         # Check if creature will breed
         if self.energy > self._genome.get('energyChildrenThreshold') and self._grid.checkBounds(self.x, self.y):
@@ -167,6 +174,13 @@ class Creature(Figure):
         # Costs for attacking a creature
         self._energy -= 0.1
         pass
+
+    def tradeFriend(self, friend):
+        # Fight logic
+        # Costs for attacking a creature
+        mid = (friend.energy + self.energy)/2
+        self.energy = mid
+        friend.energy = mid
 
     def kill(self):
         self._isAllive = False
@@ -235,7 +249,6 @@ class Creature(Figure):
         n = e.shape[0]
         for i, j in product(range(n), range(n)):
             # Similar genome means the two creatures are friendly
-            pass
             if e[i,j] and e[i,j].genome.difference(self.genome) < 0.1:
                 e[i,j] = 0
         self.enemies = e
@@ -260,10 +273,10 @@ class Creature(Figure):
         self.distanceCosts /= np.linalg.norm(np.array(self.pfShape))
 
     def costsEnemies(self):
-        costs = (self.enemies != 0).astype(int) * self._genome.get('toEnemies') * 10
-        blured = gaussian_filter(costs,sigma=2, mode="nearest")
-        rmCenter = blured[self.pfSize, self.pfSize] = 0
-        return rmCenter
+        costs = (self.enemies != 0).astype(int) * self._genome.get('toEnemies')
+        blured = gaussian_filter(costs,sigma=1, mode="nearest")
+        blured[self.pfSize, self.pfSize] = 0
+        return blured
 
     def costsFood(self):
         return -(self.food != 0).astype(int)
@@ -271,8 +284,8 @@ class Creature(Figure):
     def costsFriends(self):
         costs = (self.enemies != 0).astype(int) * self._genome.get('toFriends')
         blured = gaussian_filter(costs,sigma=1, mode="nearest")
-        rmCenter = blured[self.pfSize, self.pfSize] = 0
-        return rmCenter
+        blured[self.pfSize, self.pfSize] = 0
+        return blured
 
     def costsMove(self, path):
         return np.linalg.norm(path)*self.costsPerUnitMove

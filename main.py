@@ -1,11 +1,10 @@
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from grid import Grid
 import time
 # Parameters
-NFRAMES = 1000
-SUBFRAMES = 1
+NFRAMES = 100
+SUBFRAMES = 100
 GRIDSIZE = 120
 
 grid = Grid(GRIDSIZE, 0.02, 0.1, 0.0008)
