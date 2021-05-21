@@ -11,6 +11,7 @@ class Genome:
         ['energyChildrenThreshold',1, 15],
         ['toEnemies', -3, 3],
         ['toFriends', -3, 3],
+        ['genomeThreshold', 0, 2]
     ])
 
     def __init__(self, genes = None):
@@ -33,17 +34,11 @@ class Genome:
 
     @ staticmethod
     def range(value, low, high):
-        # Logistic equation to limit in fixed range
         return value * (high - low) + low 
-        l = high - low
-        x_0 = 0.5
-        k = 10.
-        return low + l / ( 1.0 + math.exp(-k*(value-x_0)))
 
     def replicate(self, rate):
         childGenes = self.genes + 2 * rate *  self.rg.random(len(self.attributes)) - rate
         return Genome(self.express(childGenes))
-
 
     @ staticmethod
     def express(x):

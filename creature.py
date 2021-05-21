@@ -4,6 +4,7 @@ from helpers import normalize, sRound, closestPoint
 from scipy.ndimage import gaussian_filter
 from itertools import product, combinations
 from genome import Genome
+import csv
 
 class Figure(object):
 
@@ -187,6 +188,10 @@ class Creature(Figure):
         self._grid.creatureList.remove(self)
         self._grid.creatureGrid[self.gridIndex] = 0
 
+        with open('data', 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow(self.genome.genes)
+
     # Move self, update grid data structure and energylevel
     def moveBy(self, vector):
         self._energy -= self.costsMove(vector)
@@ -249,7 +254,7 @@ class Creature(Figure):
         n = e.shape[0]
         for i, j in product(range(n), range(n)):
             # Similar genome means the two creatures are friendly
-            if e[i,j] and e[i,j].genome.difference(self.genome) < 0.1:
+            if e[i,j] and e[i,j].genome.difference(self.genome) < self.genome.get('genomeThreshold'):
                 e[i,j] = 0
         self.enemies = e
 
@@ -257,7 +262,13 @@ class Creature(Figure):
         self.food = self.perceptualField(self._grid.foodGrid)
 
     def spotFriends(self):
-        self.friends = self.creatures[self.enemies != self.creatures]
+        f = self.creatures.copy()
+        n = f.shape[0]
+        for i, j in product(range(n), range(n)):
+            # Similar genome means the two creatures are friendly
+            if f[i,j] and self.enemies[i,j]:
+                f[i,j] = 0
+        self.friends = f
 
 # =============================================================================
 # costs

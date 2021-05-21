@@ -6,6 +6,7 @@ import time
 NFRAMES = 100
 SUBFRAMES = 100
 GRIDSIZE = 120
+PLOT = False
 
 grid = Grid(GRIDSIZE, 0.02, 0.1, 0.0008)
 
@@ -25,19 +26,21 @@ grid.updateAll()
 def update(f):
     global iteration
 
-    start = time.perf_counter()
-    axLeft.clear()
-    axPf.clear()
-    axFood.clear()
-    axGen1.clear()
-    axGen2.clear()
-    axLeft.set_xlim(0,GRIDSIZE+2*Grid.ghostZone)
-    axLeft.set_ylim(GRIDSIZE+2*Grid.ghostZone,0)
-    axGen1.set_xlim(0,15)
-    axGen1.set_ylim(0,15)
-    grid.plotAll(axLeft, axPf, axFood, axGen1, axGen2)
-    end = time.perf_counter()
-    elapsed = end - start
+    if PLOT:
+        start = time.perf_counter()
+        axLeft.clear()
+        axPf.clear()
+        axFood.clear()
+        axGen1.clear()
+        axGen2.clear()
+        axLeft.set_xlim(0,GRIDSIZE+2*Grid.ghostZone)
+        axLeft.set_ylim(GRIDSIZE+2*Grid.ghostZone,0)
+        axGen1.set_xlim(0,15)
+        axGen1.set_ylim(0,15)
+        grid.plotAll(axLeft, axPf, axFood, axGen1, axGen2)
+        end = time.perf_counter()
+        elapsed = end - start
+        print('plot performance time(s): ', elapsed)
 
     # For efficency do not plot every update
     elapsed = 0
@@ -50,15 +53,19 @@ def update(f):
     
     print('avg update performance time(s): ', elapsed/SUBFRAMES)
 
-    print('plot performance time(s): ', elapsed)
     print("number of creatures: ", len(grid.creatureList))
 
     print("current itartion number: ", iteration)
     return
 
-animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=50, repeat=False)
 
-plt.show()
+
+if PLOT:
+    animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=10, repeat=False)
+    plt.show()
+else:
+    for i in range(NFRAMES):
+        update(i)
 
 
 
