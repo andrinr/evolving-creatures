@@ -4,7 +4,6 @@ from helpers import normalize, sRound, closestPoint
 from scipy.ndimage import gaussian_filter
 from itertools import product, combinations
 from genome import Genome
-import csv
 
 class Figure(object):
 
@@ -59,6 +58,8 @@ class Creature(Figure):
     rg = np.random.default_rng()
     
     uniqueId = 0
+
+    data = []
 
     def __init__(self, grid, pos, energy, genome):
         super().__init__()
@@ -116,14 +117,6 @@ class Creature(Figure):
         #scentCosts = self.perceptualField(self._grid.scent)
 
         finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + self.distanceCosts + enCosts + frCosts
-
-        # Only preys needs to flee predators
-        #if not self.genome.genes['predator'].value:
-        #    # Blur matrix to avoid creature from moving to food next to a threat
-        #    predatorCosts = self.costsPredators()
-        #    predatorCosts = gaussian_filter(predatorCosts, sigma=0.5, mode="nearest")
-        #
-        #    finalCosts += predatorCosts
 
         # Avoid staying at the same place
         finalCosts[self.pfSize, self.pfSize] = 1
@@ -188,9 +181,7 @@ class Creature(Figure):
         self._grid.creatureList.remove(self)
         self._grid.creatureGrid[self.gridIndex] = 0
 
-        with open('data', 'a') as f:
-            writer = csv.writer(f)
-            writer.writerow(self.genome.genes)
+        self.data.append(self.genome.genes)
 
     # Move self, update grid data structure and energylevel
     def moveBy(self, vector):

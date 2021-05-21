@@ -1,10 +1,13 @@
+from creature import Creature
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from grid import Grid
 import time
+import csv
+
 # Parameters
 NFRAMES = 100
-SUBFRAMES = 100
+SUBFRAMES = 10
 GRIDSIZE = 120
 PLOT = False
 
@@ -68,4 +71,7 @@ else:
         update(i)
 
 
-
+with open('log.csv', 'w') as f:
+    writer = csv.writer(f)
+    for row in Creature.data:
+        writer.writerow(row)
