@@ -1,77 +1,122 @@
 from creature import Creature
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation, FFMpegWriter
 from grid import Grid
-import time
+from  time import time
 import csv
+import numpy as np
 
-# Parameters
-NFRAMES = 100
-SUBFRAMES = 10
-GRIDSIZE = 120
-PLOT = False
 
-grid = Grid(GRIDSIZE, 0.02, 0.1, 0.0008)
+class Animation:
 
-print("number of creatures: ", len(grid.creatureList))
+    DAYS = 20
+    SUBFRAMES = 1
+    GRIDSIZE = 30
+    PLOT = True
 
-fig = plt.figure(constrained_layout=True)
-gs = fig.add_gridspec(4, 3)
-axLeft = fig.add_subplot(gs[:,0:2])
-axPf = fig.add_subplot(gs[0,2:3])
-axFood = fig.add_subplot(gs[1,2:3])
-axGen1 = fig.add_subplot(gs[2,2:4])
-axGen2 = fig.add_subplot(gs[3,2:4])
+    def __init__(self):
+        self.elapsed = []
 
-iteration = 0
-grid.updateAll()
+        self.grid = Grid(self.GRIDSIZE, 0.07, 0.03, 0.0008)
+        print("number of creatures: ", len(self.grid.creatureList))
+        self.grid.updateAll()
 
-def update(f):
-    global iteration
+        plt.style.use("dark_background")
+        fig = plt.figure(figsize=(16,10), constrained_layout=True)
+        fig.tight_layout()
+        
+        gs = fig.add_gridspec(nrows=4, ncols=3)
+        
+        self.axLeft = fig.add_subplot(gs[:,0:2])
+        self.axLeft.axis('off')
 
-    if PLOT:
-        start = time.perf_counter()
-        axLeft.clear()
-        axPf.clear()
-        axFood.clear()
-        axGen1.clear()
-        axGen2.clear()
-        axLeft.set_xlim(0,GRIDSIZE+2*Grid.ghostZone)
-        axLeft.set_ylim(GRIDSIZE+2*Grid.ghostZone,0)
-        axGen1.set_xlim(0,15)
-        axGen1.set_ylim(0,15)
-        grid.plotAll(axLeft, axPf, axFood, axGen1, axGen2)
-        end = time.perf_counter()
-        elapsed = end - start
-        print('plot performance time(s): ', elapsed)
+        self.axPf = fig.add_subplot(gs[0,2:3])
+        self.imPf = self.axPf.imshow(self.grid.creatureList[0].finalCosts.astype(float), vmin=0, vmax=1.2, cmap='magma')
 
-    # For efficency do not plot every update
-    elapsed = 0
-    for i in range(SUBFRAMES):
-        iteration += 1
-        start = time.perf_counter()
-        grid.updateAll()
-        end = time.perf_counter()
-        elapsed += end - start
+        self.axFood = fig.add_subplot(gs[1,2:3])
+
+        self.axGen1 = fig.add_subplot(gs[2,2:4])
+        self.axGen1.set_title('energyChildrenThreshold (x) vs nChildren (y)')
+
+        self.axGen2 = fig.add_subplot(gs[3,2:4])
+        self.axGen2.set_title('toEnemies (x) vs genomeThreshold (y)')
+
+        self.fig = fig
+
+        self.ani = FuncAnimation(self.fig, 
+                                 func = self.update, 
+                                 init_func = self.init, 
+                                 frames = self.DAYS, 
+                                 interval = 10, 
+                                 repeat = False)
+
+        # FFwriter = FFMpegWriter(fps=10)
+        # animation.save('simpleLife.mp4', writer=FFwriter)
+        plt.show()
+            
+
+        # with open('log.csv', 'w') as f:
+        #     writer = csv.writer(f)
+        #     for row in Creature.data:
+        #         writer.writerow(row)
+
+    def init(self):
+        pass
+
+    def update(self, iteration):
+        print(iteration)
+        start = time()
+        self.grid.updateAll()
+        self.elapsed.append(time() - start)
     
-    print('avg update performance time(s): ', elapsed/SUBFRAMES)
+        if not iteration % self.SUBFRAMES:
+            start = time()
+            self.updateSubPlots(iteration)
 
-    print("number of creatures: ", len(grid.creatureList))
+            print('plot performance time for plotting: ', time()-start)
+            print('avg update performance time: ', sum(self.elapsed)/self.SUBFRAMES)
+            print("number of creatures: ", len(self.grid.creatureList))
+            print("current itartion number: ", iteration)
+            self.elapsed.clear()
 
-    print("current itartion number: ", iteration)
-    return
+        return
+
+    def updateSubPlots(self, day):
+        self.axLeft.clear()
+        self.axLeft.axis('off')
+        self.axLeft.set_xlim(self.grid.ghostZone-2, self.GRIDSIZE + self.grid.ghostZone+2)
+        self.axLeft.set_ylim(self.grid.ghostZone-2, self.GRIDSIZE + self.grid.ghostZone+2)
+        self.axLeft.set_title('Day {}'.format(day))
+
+        self.axFood.clear()
+        self.axFood.plot(range(min(len(self.grid.histFood),1000)), self.grid.histFood[-1000:], c="green")
+        self.axFood.plot(range(min(len(self.grid.histCreatures),1000)), self.grid.histCreatures[-1000:], c="red")
+
+        self.axGen1.clear()
+        self.axGen1.set_xlim(0,15)
+        self.axGen1.set_ylim(0,15)
+
+        self.axGen2.clear()
+
+        # plot food
+        xFood, yFood = np.where(self.grid.foodGrid !=0)
+        self.axLeft.scatter(xFood, yFood, marker='*', s=80, c='green')
+
+        self.grid.creatureList[0].color = 'yellow'
+        for creature in self.grid.creatureList:
+            # plot creatures
+            self.axLeft.scatter(creature.x, creature.y, c=creature.color, s=150)
+            # plot ??
+            self.axGen1.scatter(creature.genome.get('energyChildrenThreshold'), creature.genome.get('nChildren'),s=1, marker=',')    
+            # plot ??
+            self.axGen2.scatter(creature.genome.get('toEnemies'), creature.genome.get('genomeThreshold'), marker=',')
+
+            #self.axl.annotate(creature.id, (creature.y, creature.x), c='black')
+
+        # plot perceptionfield
+        if len(self.grid.creatureList):
+            self.imPf.set_data(self.grid.creatureList[0].finalCosts.astype(float).T)
+            self.axPf.set_title("PF ID: " + str(self.grid.creatureList[0]._id))
 
 
-
-if PLOT:
-    animation = FuncAnimation(fig, update, frames=range(NFRAMES), interval=10, repeat=False)
-    plt.show()
-else:
-    for i in range(NFRAMES):
-        update(i)
-
-
-with open('log.csv', 'w') as f:
-    writer = csv.writer(f)
-    for row in Creature.data:
-        writer.writerow(row)
+Animation()
