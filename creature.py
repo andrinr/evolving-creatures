@@ -66,7 +66,8 @@ class Creature(Figure):
         self._pos = np.array(pos)
         self._genome = genome
         self._grid = grid
-        self._isAllive = True
+        self._color = 'red'
+        self._isAlive = True
 
         self.food = None
         self.creatures = None
@@ -95,7 +96,7 @@ class Creature(Figure):
 
     def update(self):
 
-        if not self._isAllive:
+        if not self._isAlive:
             return
 
         if self.rg.random() < self.deathProb or self._energy <= 0:
@@ -177,7 +178,7 @@ class Creature(Figure):
         friend.energy = mid
 
     def kill(self):
-        self._isAllive = False
+        self._isAlive = False
         self._grid.creatureList.remove(self)
         self._grid.creatureGrid[self.gridIndex] = 0
 
@@ -298,7 +299,11 @@ class Creature(Figure):
 # =============================================================================
 # getters
 # =============================================================================
-    @ property 
+    @ property
+    def color(self):
+        return self._color
+
+    @ property
     def genome(self):
          return self._genome
 
@@ -317,3 +322,11 @@ class Creature(Figure):
     @ property
     def y(self):
         return self._pos[1]
+
+
+# =============================================================================
+# setters
+# =============================================================================
+    @ color.setter
+    def color(self, col):
+        self._color = col
