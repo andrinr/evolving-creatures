@@ -9,15 +9,14 @@ import numpy as np
 
 class Animation:
 
-    DAYS = 20
-    SUBFRAMES = 1
+    DAYS = 200
+    SUBFRAMES = 5
     GRIDSIZE = 30
-    PLOT = True
 
     def __init__(self):
         self.elapsed = []
 
-        self.grid = Grid(self.GRIDSIZE, 0.07, 0.03, 0.0008)
+        self.grid = Grid(self.GRIDSIZE, 0.2, 0.2, 0.01)
         print("number of creatures: ", len(self.grid.creatureList))
         self.grid.updateAll()
 
@@ -46,12 +45,12 @@ class Animation:
         self.ani = FuncAnimation(self.fig, 
                                  func = self.update, 
                                  init_func = self.init, 
-                                 frames = self.DAYS, 
+                                 frames = self.DAYS+1, 
                                  interval = 10, 
                                  repeat = False)
 
-        # FFwriter = FFMpegWriter(fps=10)
-        # animation.save('simpleLife.mp4', writer=FFwriter)
+        FFwriter = FFMpegWriter(fps=10)
+        self.ani.save('simpleLife.mp4', writer=FFwriter)
         plt.show()
             
 
@@ -64,7 +63,6 @@ class Animation:
         pass
 
     def update(self, iteration):
-        print(iteration)
         start = time()
         self.grid.updateAll()
         self.elapsed.append(time() - start)
@@ -102,7 +100,12 @@ class Animation:
         xFood, yFood = np.where(self.grid.foodGrid !=0)
         self.axLeft.scatter(xFood, yFood, marker='*', s=80, c='green')
 
-        self.grid.creatureList[0].color = 'yellow'
+        # plot perceptionfield
+        if len(self.grid.creatureList):
+            self.imPf.set_data(self.grid.creatureList[0].finalCosts.astype(float))
+            self.axPf.set_title("PF ID: " + str(self.grid.creatureList[0]._id))
+            self.grid.creatureList[0].color = 'yellow'
+
         for creature in self.grid.creatureList:
             # plot creatures
             self.axLeft.scatter(creature.x, creature.y, c=creature.color, s=150)
@@ -113,10 +116,6 @@ class Animation:
 
             #self.axl.annotate(creature.id, (creature.y, creature.x), c='black')
 
-        # plot perceptionfield
-        if len(self.grid.creatureList):
-            self.imPf.set_data(self.grid.creatureList[0].finalCosts.astype(float).T)
-            self.axPf.set_title("PF ID: " + str(self.grid.creatureList[0]._id))
 
 
 Animation()
