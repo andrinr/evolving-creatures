@@ -48,7 +48,7 @@ class Food(Figure):
 
 class Creature(Figure):
     # Static
-    costsPerUnitMove = 0.05
+    costsPerUnitMove = 0.07
     genomThreshold = 0.2
     deathProb = 0.02
     maxEnergy = 10
