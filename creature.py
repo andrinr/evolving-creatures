@@ -113,9 +113,9 @@ class Creature(Figure):
         enCosts = self.costsEnemies()
         frCosts = self.costsFriends()
         randomCosts = self.costsRandom(0.02)
-        topoCosts = self.perceptualField(self._grid.topography)
+        topoCosts = self.perceptualField(self._grid.topography, self.pfSize)
 
-        #scentCosts = self.perceptualField(self._grid.scent)
+        #scentCosts = self.perceptualField(self._grid.scent, self.pfSize)
 
         finalCosts = foodCosts + creatureCosts + randomCosts + topoCosts + self.distanceCosts + enCosts + frCosts
 
@@ -196,7 +196,7 @@ class Creature(Figure):
 
     def breed(self):
         # Adjacency field are all the fields within a distance of 1
-        adj = self.adjacencyField(self._grid.creatureGrid)
+        adj = self.perceptualField(self._grid.creatureGrid, 1)
         # All instances where there is no other creature
         free = adj == 0
         # Set the aim of new children, limited by the avaiable space
@@ -218,24 +218,17 @@ class Creature(Figure):
 # =============================================================================
 # perception
 # =============================================================================
-    def perceptualField(self, grid):
-        r = self.pfSize
+    def perceptualField(self, grid, size):
+        r = size
         lx = self.x - r
         ly = self.y - r
         ux = self.x + r + 1
         uy = self.y + r + 1
         return grid[lx : ux, ly : uy]
 
-    def adjacencyField(self, grid):
-        r = 1
-        lx = self.x - r
-        ly = self.y - r
-        ux = self.x + r + 1
-        uy = self.y + r + 1
-        return grid[lx : ux, ly : uy]
 
     def spotCreatures(self):
-        self.creatures = self.perceptualField(self._grid.creatureGrid)
+        self.creatures = self.perceptualField(self._grid.creatureGrid, self.pfSize)
         # Make sure self is counted as other creature # is this necessary? can a creature stay at the same position? 
         if np.shape(self.creatures)[0] == 0:
             print(self.x, self.y)
@@ -251,7 +244,7 @@ class Creature(Figure):
         self.enemies = e
 
     def spotFood(self):
-        self.food = self.perceptualField(self._grid.foodGrid)
+        self.food = self.perceptualField(self._grid.foodGrid, self.pfSize)
 
     def spotFriends(self):
         f = self.creatures.copy()
