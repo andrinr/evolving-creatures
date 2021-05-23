@@ -9,25 +9,43 @@ import numpy as np
 
 class Animation:
 
-    DAYS = 200
-    SUBFRAMES = 5
+    DAYS = 100
+    SUBFRAMES = 2
     GRIDSIZE = 30
 
     def __init__(self):
         self.elapsed = []
 
-        self.grid = Grid(self.GRIDSIZE, 0.2, 0.2, 0.01)
+        self.grid = Grid(self.GRIDSIZE, 0.01, 0.15, 0.03)
         print("number of creatures: ", len(self.grid.creatureList))
         self.grid.updateAll()
-
+        self.xStat = [0,1]
+        self.yStat = self.grid.histCreatures*2
+        
         plt.style.use("dark_background")
         fig = plt.figure(figsize=(16,10), constrained_layout=True)
+        figStat = plt.figure(figsize=(16,10))
+        
         fig.tight_layout()
-        
+        figStat.tight_layout()
+
         gs = fig.add_gridspec(nrows=4, ncols=3)
-        
-        self.axLeft = fig.add_subplot(gs[:,0:2])
-        self.axLeft.axis('off')
+
+        self.axCreatures = fig.add_subplot(gs[:,0:1])
+        self.axCreatures.axis('off')
+
+        self.axAni = figStat.add_subplot(121)
+        self.axAni.axis('off')
+
+        # self.axStat = SubplotZero(figStat, 122)
+        # figStat.add_subplot(self.axStat)
+        self.axStat = figStat.add_subplot(122)
+        self.arrowSpines(self.axStat)
+        self.axStat.set_xlim(0, self.DAYS)
+        self.axStat.set_ylim(0, 200)
+
+
+        self.statGraph, = plt.plot([], [], '-o', markersize=2)
 
         self.axPf = fig.add_subplot(gs[0,2:3])
         self.imPf = self.axPf.imshow(self.grid.creatureList[0].finalCosts.astype(float), vmin=0, vmax=1.2, cmap='magma')
@@ -42,15 +60,15 @@ class Animation:
 
         self.fig = fig
 
-        self.ani = FuncAnimation(self.fig, 
+        self.ani = FuncAnimation(figStat, 
                                  func = self.update, 
                                  init_func = self.init, 
                                  frames = self.DAYS+1, 
                                  interval = 10, 
                                  repeat = False)
 
-        FFwriter = FFMpegWriter(fps=10)
-        self.ani.save('simpleLife.mp4', writer=FFwriter)
+        # FFwriter = FFMpegWriter(fps=10)
+        # self.ani.save('ani3.mp4', writer=FFwriter)
         plt.show()
             
 
@@ -61,16 +79,24 @@ class Animation:
 
     def init(self):
         pass
+        # self.axStat.set_ylabel('Creatures')
+        # self.axStat.spines['top'].set_visible(False)
+        # self.axStat.spines['right'].set_visible(False)
+        # return self.statGraph, 
 
     def update(self, iteration):
         start = time()
         self.grid.updateAll()
         self.elapsed.append(time() - start)
-    
+        self.animateStat(iteration)
+
         if not iteration % self.SUBFRAMES:
             start = time()
-            self.updateSubPlots(iteration)
-
+            self.animateCreatures(self.axAni, iteration)
+            # self.animateFood()
+            # self.animateGen1()
+            # self.animateGen2()
+            # self.animatePerceptionField()
             print('plot performance time for plotting: ', time()-start)
             print('avg update performance time: ', sum(self.elapsed)/self.SUBFRAMES)
             print("number of creatures: ", len(self.grid.creatureList))
@@ -79,43 +105,76 @@ class Animation:
 
         return
 
-    def updateSubPlots(self, day):
-        self.axLeft.clear()
-        self.axLeft.axis('off')
-        self.axLeft.set_xlim(self.grid.ghostZone-2, self.GRIDSIZE + self.grid.ghostZone+2)
-        self.axLeft.set_ylim(self.grid.ghostZone-2, self.GRIDSIZE + self.grid.ghostZone+2)
-        self.axLeft.set_title('Day {}'.format(day))
+    def animateCreatures(self, ax, day):
+        ax.clear()
+        ax.axis('off')
+        ax.set_xlim(self.grid.ghostZone-2, self.GRIDSIZE + self.grid.ghostZone+2)
+        ax.set_ylim(self.grid.ghostZone-2, self.GRIDSIZE + self.grid.ghostZone+2)
+        ax.set_title('Day {}'.format(day))
 
+        xFood, yFood = np.where(self.grid.foodGrid !=0)
+        ax.scatter(xFood, yFood, marker='*', s=80, c='green')
+
+        # mark the creature, whose perceptionfield is visualized
+        if len(self.grid.creatureList):
+            self.grid.creatureList[0].color = 'yellow'
+        
+        xCreatures, yCreatures, colors = zip(*[[c.x, c.y, c.color] for c in self.grid.creatureList])
+        ax.scatter(xCreatures, yCreatures, s=160, c=colors)
+        ax.set_title('Day {}'.format(day))
+
+    # change this name
+    def animateFood(self):
         self.axFood.clear()
         self.axFood.plot(range(min(len(self.grid.histFood),1000)), self.grid.histFood[-1000:], c="green")
         self.axFood.plot(range(min(len(self.grid.histCreatures),1000)), self.grid.histCreatures[-1000:], c="red")
 
+    def animateGen1(self):
         self.axGen1.clear()
-        self.axGen1.set_xlim(0,15)
-        self.axGen1.set_ylim(0,15)
 
+        for creature in self.grid.creatureList:
+            self.axGen1.scatter(creature.genome.get('energyChildrenThreshold'), creature.genome.get('nChildren'),s=1, marker=',')
+
+    def animateGen2(self):
         self.axGen2.clear()
+        for creature in self.grid.creatureList:
+            self.axGen2.scatter(creature.genome.get('toEnemies'), creature.genome.get('genomeThreshold'), marker=',')
 
-        # plot food
-        xFood, yFood = np.where(self.grid.foodGrid !=0)
-        self.axLeft.scatter(xFood, yFood, marker='*', s=80, c='green')
-
-        # plot perceptionfield
+    def animatePerceptionField(self):
         if len(self.grid.creatureList):
             self.imPf.set_data(self.grid.creatureList[0].finalCosts.astype(float))
             self.axPf.set_title("PF ID: " + str(self.grid.creatureList[0]._id))
-            self.grid.creatureList[0].color = 'yellow'
 
-        for creature in self.grid.creatureList:
-            # plot creatures
-            self.axLeft.scatter(creature.x, creature.y, c=creature.color, s=150)
-            # plot ??
-            self.axGen1.scatter(creature.genome.get('energyChildrenThreshold'), creature.genome.get('nChildren'),s=1, marker=',')    
-            # plot ??
-            self.axGen2.scatter(creature.genome.get('toEnemies'), creature.genome.get('genomeThreshold'), marker=',')
+    def animateStat(self, day):
+        self.yStat += [self.grid.histCreatures[-1]] * 2
+        self.xStat.extend([day+1, day+2])
+        self.statGraph.set_data(self.xStat, self.yStat)
 
-            #self.axl.annotate(creature.id, (creature.y, creature.x), c='black')
+    def arrowSpines(self, ax):
+        rc = {"xtick.direction" : "inout", 
+              "ytick.direction" : "inout", 
+              "xtick.major.size" : 5, 
+              "ytick.major.size" : 5}
 
+        with plt.rc_context(rc):
+            ax.spines['left'].set_position('zero')
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_position('zero')
+            ax.spines['top'].set_visible(False)
+
+            ax.set_xlabel('Days')
+            ax.set_ylabel('Creatures')
+            ax.xaxis.set_ticks_position('bottom')
+            ax.yaxis.set_ticks_position('left')
+
+            # make arrows
+# =============================================================================
+#           ARROWS NOT VISIBLE WHY?
+# =============================================================================
+            ax.plot((1), (0), ls="", marker=">", ms=10, color="k",
+                    transform=ax.get_yaxis_transform(), clip_on=False)
+            ax.plot((0), (1), ls="", marker="^", ms=10, color="k",
+                    transform=ax.get_xaxis_transform(), clip_on=False)
 
 
 Animation()
