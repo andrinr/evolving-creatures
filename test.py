@@ -9,7 +9,10 @@ a = np.array([
 
 print(np.argmin(a))
 
-ax = plt.subplot()
+fig = plt.figure()
+gs = fig.add_gridspec(4, 4)
+
+ax = fig.add_subplot(gs[0,1])
 
 ax.set_xlim(-1,3)
 ax.set_ylim(3,-1)
