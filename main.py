@@ -5,13 +5,16 @@ from grid import Grid
 from  time import time
 import csv
 import numpy as np
+from genome import Genome
 
 
 class Animation:
 
-    DAYS = 200
-    SUBFRAMES = 5
+    DAYS = 1000
+    SUBFRAMES = 10
     GRIDSIZE = 30
+
+    PLOTOUT = False
 
     def __init__(self):
         self.elapsed = []
@@ -20,44 +23,48 @@ class Animation:
         print("number of creatures: ", len(self.grid.creatureList))
         self.grid.updateAll()
 
-        plt.style.use("dark_background")
-        fig = plt.figure(figsize=(16,10), constrained_layout=True)
-        fig.tight_layout()
-        
-        gs = fig.add_gridspec(nrows=4, ncols=3)
-        
-        self.axLeft = fig.add_subplot(gs[:,0:2])
-        self.axLeft.axis('off')
-
-        self.axPf = fig.add_subplot(gs[0,2:3])
-        self.imPf = self.axPf.imshow(self.grid.creatureList[0].finalCosts.astype(float), vmin=0, vmax=1.2, cmap='magma')
-
-        self.axFood = fig.add_subplot(gs[1,2:3])
-
-        self.axGen1 = fig.add_subplot(gs[2,2:4])
-        self.axGen1.set_title('energyChildrenThreshold (x) vs nChildren (y)')
-
-        self.axGen2 = fig.add_subplot(gs[3,2:4])
-        self.axGen2.set_title('toEnemies (x) vs genomeThreshold (y)')
-
-        self.fig = fig
-
-        self.ani = FuncAnimation(self.fig, 
-                                 func = self.update, 
-                                 init_func = self.init, 
-                                 frames = self.DAYS+1, 
-                                 interval = 10, 
-                                 repeat = False)
-
-        FFwriter = FFMpegWriter(fps=10)
-        self.ani.save('simpleLife.mp4', writer=FFwriter)
-        plt.show()
+        if self.PLOTOUT :
+            plt.style.use("dark_background")
+            fig = plt.figure(figsize=(16,10), constrained_layout=True)
+            fig.tight_layout()
             
+            gs = fig.add_gridspec(nrows=4, ncols=3)
+            
+            self.axLeft = fig.add_subplot(gs[:,0:2])
+            self.axLeft.axis('off')
 
-        # with open('log.csv', 'w') as f:
-        #     writer = csv.writer(f)
-        #     for row in Creature.data:
-        #         writer.writerow(row)
+            self.axPf = fig.add_subplot(gs[0,2:3])
+            self.imPf = self.axPf.imshow(self.grid.creatureList[0].finalCosts.astype(float), vmin=0, vmax=1.2, cmap='magma')
+
+            self.axFood = fig.add_subplot(gs[1,2:3])
+
+            self.axGen1 = fig.add_subplot(gs[2,2:4])
+            self.axGen1.set_title('energyChildrenThreshold (x) vs nChildren (y)')
+
+            self.axGen2 = fig.add_subplot(gs[3,2:4])
+            self.axGen2.set_title('toEnemies (x) vs genomeThreshold (y)')
+
+            self.fig = fig
+
+            self.ani = FuncAnimation(self.fig, 
+                                    func = self.update, 
+                                    init_func = self.init, 
+                                    frames = self.DAYS+1, 
+                                    interval = 10, 
+                                    repeat = False)
+
+            #FFwriter = FFMpegWriter(fps=10)
+            #self.ani.save('simpleLife.mp4', writer=FFwriter)
+            plt.show()
+        else:
+            for i in range(self.DAYS):
+                self.update(i)
+
+            with open('log.csv', 'w') as f:
+                writer = csv.writer(f)
+                writer.writerow(Genome.properties[:,0])
+                for row in Creature.data:
+                    writer.writerow(row)
 
     def init(self):
         pass
@@ -69,7 +76,8 @@ class Animation:
     
         if not iteration % self.SUBFRAMES:
             start = time()
-            self.updateSubPlots(iteration)
+            
+            if self.PLOTOUT : self.updateSubPlots(iteration)
 
             print('plot performance time for plotting: ', time()-start)
             print('avg update performance time: ', sum(self.elapsed)/self.SUBFRAMES)
