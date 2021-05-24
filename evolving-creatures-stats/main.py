@@ -44,7 +44,7 @@ class Animation:
         # self.axStat = SubplotZero(figStat, 122)
         # figStat.add_subplot(self.axStat)
         self.axStat = figStat.add_subplot(122)
-        # self.arrowSpines(self.axStat)
+        self.arrowSpines(self.axStat)
 
 
         # animate random movement without any properties
@@ -67,7 +67,7 @@ class Animation:
                                  func = self.update, 
                                  init_func = self.init, 
                                  frames = self.DAYS+1, 
-                                 interval =100, 
+                                 interval =10, 
                                  repeat = True)
 
         # FFwriter = FFMpegWriter(fps=10)
@@ -103,7 +103,7 @@ class Animation:
             print("current itartion number: ", iteration)
             self.elapsed.clear()
 
-        return
+        return self.axAni,
 
     def animateCreatures(self, ax, day):
         ax.clear()
