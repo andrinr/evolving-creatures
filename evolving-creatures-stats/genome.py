@@ -9,10 +9,11 @@ class Genome:
     # {name: (min, max)}
     bounds = {'speed':(1, 6),
               'nKids': (1, 5),
-              'energyChildrenThreshold': (1, 5),
+              'energyChildrenThreshold': (2, 5),
               'toEnemies': (-3, 3),
               'toFriends': (-3, 3),
-              'genomeThreshold': (0, 2)
+              'genomeThreshold': (0, 2),
+              'pfSize': (4, 10)
               }
 
 
@@ -23,8 +24,7 @@ class Genome:
         else:
             self.names = ['energyChildrenThreshold', 'nKids']
             self.names += names
-            self.idx = {}
-            self.idx.update({gene: i for i, gene in enumerate(self.names)})
+            self.idx = {gene: i for i, gene in enumerate(self.names)}
             self.genes = self.randomGenes()
 
 
