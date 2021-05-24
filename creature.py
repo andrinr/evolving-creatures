@@ -190,7 +190,7 @@ class Creature(Figure):
         self._grid.creatureList.remove(self)
         self._grid.creatureGrid[self.gridIndex] = 0
 
-        self.data.append(self.genome.genes.tolist() + [self.iteration, self._age])
+        self.data.append(self.genome.list() + [self.iteration, self._age])
 
     # Move self, update grid data structure and energylevel
     def moveBy(self, vector):

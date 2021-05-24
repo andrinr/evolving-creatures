@@ -1,7 +1,4 @@
-from operator import attrgetter
 import numpy as np
-from scipy.stats import norm
-import math
 
 class Genome:
     rg =  np.random.default_rng()
@@ -36,13 +33,10 @@ class Genome:
     def range(value, low, high):
         return value * (high - low) + low 
 
-    def replicate(self, rate):
-        childGenes = self.genes + 2 * rate *  self.rg.random(len(self.attributes)) - rate
-        return Genome(self.express(childGenes))
+    def list(self):
+        out = []
+        for name in self.properties[:,0]:
+            out.append(self.get(name))
 
-    @ staticmethod
-    def express(x):
-        return norm.cdf(x, loc=0, scale=0.2)
-        # L = max - min
-        # x_0 = (max + min) / 2
-        # return L / ( 1 + math.exp(1*(value-x_0)))
+        return out
+

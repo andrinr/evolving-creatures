@@ -16,11 +16,12 @@ df_genes = df_creatures[['nChildren', 'energyChildrenThreshold', 'toEnemies', 't
 #grid.map_upper(sns.scatterplot)
 #grid.map_lower(sns.kdeplot, fill=True)
 
+# LINE PLOT NUMBER OF CHILDREN
 df_creatures['t'] = df_creatures['t'].div(100).round(0)
-grouped = df_creatures.groupby('t').mean()
+#grouped = df_creatures.groupby('t').median()
 
-print(df_creatures)
-print(grouped)
-sns.lineplot(data = grouped, x='t', y='nChildren')
+#sns.boxplot(x='t', y='nChildren', data=df_creatures)
+sns.boxplot(x='t', y='toEnemies', data=df_creatures)
+
 
 plt.show()
