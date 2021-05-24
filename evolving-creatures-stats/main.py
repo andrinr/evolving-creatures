@@ -1,4 +1,5 @@
 from creature import Creature
+from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter
 from grid import Grid
@@ -10,16 +11,23 @@ import scipy.stats as st
 
 
 
+GRID_SIZE = 50
+CREATURE_RATE = 0.1
+INIT_FOOD_RATE = 0.1
+GROW_FOOD_RATE = 0.0025
+
+
 class Animation:
-
-    DAYS = 200
+    DAYS = 250
     SUBFRAMES = 1
-    GRIDSIZE = 30
 
-    def __init__(self):
+    def __init__(self, gridSize, creatureRate, initFoodRate, growFoodRate):
         self.elapsed = []
-
-        self.grid = Grid(self.GRIDSIZE, 0.05, 0.5, 0.005)
+        self.GRIDSIZE = gridSize
+        self.creatureRate = creatureRate
+        self.initFoodRate = initFoodRate
+        self.growFoodRate = growFoodRate
+        self.grid = Grid(gridSize, creatureRate, initFoodRate, growFoodRate)
         print("number of creatures: ", len(self.grid.creatureList))
         self.grid.updateAll()
         self.xStat = [0,1]
@@ -41,14 +49,17 @@ class Animation:
         self.axAni = figStat.add_subplot(121)
         self.axAni.axis('off')
 
-        # self.axStat = SubplotZero(figStat, 122)
-        # figStat.add_subplot(self.axStat)
         self.axStat = figStat.add_subplot(122)
-        self.arrowSpines(self.axStat)
+        self.axStat.spines['right'].set_visible(False)
+        self.axStat.spines['top'].set_visible(False)
+        self.axStat.set_xlim(1, 6)
+        self.axStat.set_ylim(0, 100)
+
+        # self.arrowSpines(self.axStat)0
 
 
         # animate random movement without any properties
-        # self.statGraph, = plt.plot([], [], '-o', markersize=2)
+        # self.statGraph, = plt.plot([], [], 'o', markersize=20, color)
 
         # self.axPf = fig.add_subplot(gs[0,2:3])
         # self.imPf = self.axPf.imshow(self.grid.creatureList[0].finalCosts.astype(float), vmin=0, vmax=1.2, cmap='magma')
@@ -70,8 +81,8 @@ class Animation:
                                  interval =10, 
                                  repeat = True)
 
-        # FFwriter = FFMpegWriter(fps=10)
-        # self.ani.save('ani3.mp4', writer=FFwriter)
+        FFwriter = FFMpegWriter(fps=10)
+        self.ani.save('ani3.mp4', writer=FFwriter)
         plt.show()
             
 
@@ -84,24 +95,31 @@ class Animation:
         pass
 
     def update(self, iteration):
-        start = time()
+        # start = time()
         self.grid.updateAll()
-        self.elapsed.append(time() - start)
-        # self.animateStat(iteration)
-        self.animateHist()
+        # self.elapsed.append(time() - start)
+        
+        # animate random movement without any properties
+        # self.animateLinePlot(iteration)
+        
+        # animate random movement with speed properties and also speed/PF properties
+        self.animateHistSpeed()
+
+        # animate random mov. with speed vs. perceptual field size
+        # self.animateSpeedPF()
 
         if not iteration % self.SUBFRAMES:
-            start = time()
+            # start = time()
             self.animateCreatures(self.axAni, iteration)
             # self.animateFood()
             # self.animateGen1()
             # self.animateGen2()
             # self.animatePerceptionField()
-            print('plot performance time for plotting: ', time()-start)
-            print('avg update performance time: ', sum(self.elapsed)/self.SUBFRAMES)
-            print("number of creatures: ", len(self.grid.creatureList))
-            print("current itartion number: ", iteration)
-            self.elapsed.clear()
+            # print('plot performance time for plotting: ', time()-start)
+            # print('avg update performance time: ', sum(self.elapsed)/self.SUBFRAMES)
+            # print("number of creatures: ", len(self.grid.creatureList))
+            # print("current itartion number: ", iteration)
+            # self.elapsed.clear()
 
         return self.axAni,
 
@@ -146,43 +164,54 @@ class Animation:
             self.axPf.set_title("PF ID: " + str(self.grid.creatureList[0]._id))
 
     # animate random movement without any properties
-    def animateStat1(self, day):
+    def animateLinePlot(self, day):
         self.yStat += [self.grid.histCreatures[-1]] * 2
         self.xStat.extend([day+1, day+2])
         self.statGraph.set_data(self.xStat, self.yStat)
 
-    def animateHist(self):
+    # animate speed
+    def animateHistSpeed(self):
         _, maxSpeed = self.grid.creatureList[0].genome.bounds['speed']
         x = np.linspace(1, maxSpeed, 4*maxSpeed)
 
         self.axStat.clear()
-        self.axStat.set_title('')
         self.axStat.set_xlim(1, maxSpeed)
         self.axStat.set_ylim(0, 3)
+        self.axStat.set_xlabel('Speed')
+        self.axStat.set_title('Speed & Sense')
+        x, y = 4.8,2.7
+        self.axStat.text(x, 
+                         y, 
+                         'Grid Size: {}x{}\nCreature Rate: {}\nInit Food Rate: {}\nGrow Food Rate: {}'.format(self.GRIDSIZE,
+                                                                                                              self.GRIDSIZE,
+                                                                                                              self.creatureRate,
+                                                                                                              self.creatureRate,
+                                                                                                              self.growFoodRate),
+                         bbox = dict(facecolor='blue', alpha=.5))
 
         n, bins, patches = self.axStat.hist(self.grid.histSpeeds,
                                             range = [1, maxSpeed],
                                             density = True,
-                                            bins = maxSpeed*5)
-        
+                                            bins = maxSpeed*4)
+
         kde = st.gaussian_kde(self.grid.histSpeeds).pdf(x)
-        self.axStat.plot(x, kde, 'r-', label='PDF', color='yellow')
+        self.axStat.plot(x, kde, '-', label='PDF', color='yellow')
 
         for i, p in enumerate(patches):
             plt.setp(p, 'facecolor', cMap(round(i/(maxSpeed*5-1) * 254)))
 
-    def animateBarplot(self):
+    def animateSpeedPF(self):
+        # self.statGraph.set_data(self.grid.histSpeeds, self.grid.histPFsize)
         self.axStat.clear()
-        self.axStat.set_xlim(0, 8)
-        self.axStat.set_ylim(0, 150)
-        distr = np.zeros(6, dtype=int) 
-        start, step = 254/12, 254/6
-        colors = [cMap(round(start + i * step)) for i in range(6)]
-        for creature in self.grid.creatureList:
-            distr[round(creature.genome.get('speed'))-1] += 1
-        self.axStat.bar(range(1,7), distr, color=colors)
-        
-        
+        self.axStat.spines['right'].set_visible(False)
+        self.axStat.spines['top'].set_visible(False)
+        self.axStat.set_xlim(1, 6)
+        self.axStat.set_ylim(4, 10)
+        self.axStat.scatter(x = self.grid.histSpeeds, 
+                            y = self.grid.histPFsize,
+                            s = 80,
+                            c = self.grid.histColors)
+
     def arrowSpines(self, ax):
         rc = {"xtick.direction" : "inout", 
               "ytick.direction" : "inout", 
@@ -204,10 +233,10 @@ class Animation:
 # =============================================================================
 #           ARROWS NOT VISIBLE WHY?
 # =============================================================================
-            ax.plot((1), (0), ls="", marker=">", ms=10, color="k",
-                    transform=ax.get_yaxis_transform(), clip_on=False)
-            ax.plot((0), (1), ls="", marker="^", ms=10, color="k",
-                    transform=ax.get_xaxis_transform(), clip_on=False)
+            # ax.plot((1), (0), ls="", marker=">", ms=10, color="k",
+            #         transform=ax.get_yaxis_transform(), clip_on=False)
+            # ax.plot((0), (1), ls="", marker="^", ms=10, color="k",
+            #         transform=ax.get_xaxis_transform(), clip_on=False)
 
 
-Animation()
+Animation(GRID_SIZE, CREATURE_RATE, INIT_FOOD_RATE, GROW_FOOD_RATE)
