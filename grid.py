@@ -5,7 +5,6 @@ from itertools import product
 from genome import Genome
 
 class Grid:
-
     #Ghost zone should be bigger than Creature.perceptionFieldSize
     ghostZone = 10
 

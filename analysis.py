@@ -15,7 +15,7 @@ df_genes = df_creatures[['nChildren', 'energyChildrenThreshold', 'toEnemies', 't
 #grid.map_diag(sns.histplot)
 #grid.map_upper(sns.scatterplot)
 #grid.map_lower(sns.kdeplot, fill=True)
-
+    
 # LINE PLOT NUMBER OF CHILDREN
 
 # Summarize time ranges#

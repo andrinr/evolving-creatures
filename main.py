@@ -7,7 +7,6 @@ import csv
 import numpy as np
 from genome import Genome
 
-
 class Animation:
 
     DAYS = 1000
