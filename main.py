@@ -10,7 +10,7 @@ from genome import Genome
 
 class Animation:
 
-    DAYS = 3000
+    DAYS = 1000
     SUBFRAMES = 10
     GRIDSIZE = 100
 
@@ -60,11 +60,17 @@ class Animation:
             for i in range(self.DAYS):
                 self.update(i)
 
-            with open('log.csv', 'w') as f:
+            with open('./logs/creature.csv', 'w') as f:
                 writer = csv.writer(f)
-                writer.writerow(Genome.properties[:,0].tolist() + ['t', 'age'])
+                writer.writerow(Genome.properties[:,0].tolist() + ['t', 'age', 'causeOfDeath'])
                 for row in Creature.data:
                     writer.writerow(row)
+
+            with open('./logs/general.csv', 'w') as f:
+                writer = csv.writer(f)
+                writer.writerow(['nCreatures', 'nFood', 't'])
+                for i in range(len(self.grid.histFood)):
+                    writer.writerow([self.grid.histCreatures[i], self.grid.histFood[i], i])
 
     def init(self):
         pass

@@ -54,7 +54,7 @@ class Creature(Figure):
     attackPenalty = 0.01
     altruismPenalty = 0.2
     maxEnergy = 10
-    pfSize = 5
+    pfSize = 3
     pfShape = [pfSize, pfSize]
     distanceCosts = np.zeros((pfSize*2+1, pfSize*2+1))
     rg = np.random.default_rng()
@@ -107,8 +107,12 @@ class Creature(Figure):
         if not self._isAlive:
             return
 
-        if self.rg.random() < self.deathProb or self._energy <= 0:
-            self.die()
+        if self.rg.random() < self.deathProb:
+            self.die('accident')
+            return
+
+        if self._energy <= 0:
+            self.die('energy')
             return
 
         self.spotFood()
@@ -173,7 +177,7 @@ class Creature(Figure):
         # Fight logic
         if (self.energy > enemy.energy):
             self._energy += enemy.energy
-            enemy.die()
+            enemy.die('murder')
         # Costs for attacking a creature
         self._energy -= self.attackPenalty
         pass
@@ -185,12 +189,13 @@ class Creature(Figure):
         self.energy = mid-self.altruismPenalty
         friend.energy = mid+self.altruismPenalty
 
-    def die(self):
+    # Death with death cause
+    def die(self, cause):
         self._isAlive = False
         self._grid.creatureList.remove(self)
         self._grid.creatureGrid[self.gridIndex] = 0
 
-        self.data.append(self.genome.list() + [self.iteration, self._age])
+        self.data.append(self.genome.list() + [self.iteration, self._age, cause])
 
     # Move self, update grid data structure and energylevel
     def moveBy(self, vector):
@@ -211,7 +216,7 @@ class Creature(Figure):
         nChildrenAim = min(int(self._genome.get('nChildren')), np.count_nonzero(free))
         nChildrenActual = 0
 
-        self.die()
+        self.die('breed')
 
         for i, j in combinations(range(3), 2):
             # Spawn creature when cell is free
