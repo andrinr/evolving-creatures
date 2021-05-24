@@ -10,18 +10,18 @@ from genome import Genome
 
 class Animation:
 
-    DAYS = 1000
+    DAYS = 3000
     SUBFRAMES = 10
-    GRIDSIZE = 30
+    GRIDSIZE = 100
 
     PLOTOUT = False
 
     def __init__(self):
         self.elapsed = []
 
-        self.grid = Grid(self.GRIDSIZE, 0.2, 0.2, 0.01)
+        self.grid = Grid(self.GRIDSIZE, 0.003, 0.004, 0.001)
         print("number of creatures: ", len(self.grid.creatureList))
-        self.grid.updateAll()
+        self.grid.updateAll(0)
 
         if self.PLOTOUT :
             plt.style.use("dark_background")
@@ -62,7 +62,7 @@ class Animation:
 
             with open('log.csv', 'w') as f:
                 writer = csv.writer(f)
-                writer.writerow(Genome.properties[:,0])
+                writer.writerow(Genome.properties[:,0].tolist() + ['t', 'age'])
                 for row in Creature.data:
                     writer.writerow(row)
 
@@ -71,7 +71,7 @@ class Animation:
 
     def update(self, iteration):
         start = time()
-        self.grid.updateAll()
+        self.grid.updateAll(iteration)
         self.elapsed.append(time() - start)
     
         if not iteration % self.SUBFRAMES:

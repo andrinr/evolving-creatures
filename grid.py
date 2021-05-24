@@ -37,7 +37,7 @@ class Grid:
         self.histCreatures = []
         self.histFood = []
 
-    def updateAll(self):
+    def updateAll(self, iteration):
         self.scent *= 0.9
         self.foodGrid[self.innerGridSlice] += (self.__rg.random(self.innerGridShape).astype(float) < self.dtfoodDensity).astype(int) * Food()
 
@@ -46,7 +46,7 @@ class Grid:
         shuffled = self.creatureList.copy()
         self.__rg.shuffle(shuffled)
         for creature in shuffled:
-            creature.update()
+            creature.update(iteration)
 
         self.histCreatures.append(len(self.creatureList))
         self.histFood.append(np.count_nonzero(self.foodGrid))

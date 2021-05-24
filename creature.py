@@ -51,6 +51,8 @@ class Creature(Figure):
     costsPerUnitMove = 0.07
     genomThreshold = 0.2
     deathProb = 0.02
+    attackPenalty = 0.01
+    altruismPenalty = 0.2
     maxEnergy = 10
     pfSize = 5
     pfShape = [pfSize, pfSize]
@@ -68,6 +70,9 @@ class Creature(Figure):
         self._grid = grid
         self._color = 'red'
         self._isAlive = True
+        self._age = 0
+
+        self.iteration = 0
 
         self.food = None
         self.creatures = None
@@ -94,13 +99,16 @@ class Creature(Figure):
     def __str__(self):
         return 'Creature ID. = {}\nEnergyLevel = {}\n'.format(self.id, self.energy)
 
-    def update(self):
+    def update(self, iteration):
+
+        self.iteration = iteration
+        self._age += 1
 
         if not self._isAlive:
             return
 
         if self.rg.random() < self.deathProb or self._energy <= 0:
-            self.kill()
+            self.die()
             return
 
         self.spotFood()
@@ -165,24 +173,24 @@ class Creature(Figure):
         # Fight logic
         if (self.energy > enemy.energy):
             self._energy += enemy.energy
-            enemy.kill()
+            enemy.die()
         # Costs for attacking a creature
-        self._energy -= 0.1
+        self._energy -= self.attackPenalty
         pass
 
     def tradeFriend(self, friend):
         # Fight logic
         # Costs for attacking a creature
         mid = (friend.energy + self.energy)/2
-        self.energy = mid
-        friend.energy = mid
+        self.energy = mid-self.altruismPenalty
+        friend.energy = mid+self.altruismPenalty
 
-    def kill(self):
+    def die(self):
         self._isAlive = False
         self._grid.creatureList.remove(self)
         self._grid.creatureGrid[self.gridIndex] = 0
 
-        self.data.append(self.genome.genes)
+        self.data.append(self.genome.genes.tolist() + [self.iteration, self._age])
 
     # Move self, update grid data structure and energylevel
     def moveBy(self, vector):
@@ -203,7 +211,7 @@ class Creature(Figure):
         nChildrenAim = min(int(self._genome.get('nChildren')), np.count_nonzero(free))
         nChildrenActual = 0
 
-        self.kill()
+        self.die()
 
         for i, j in combinations(range(3), 2):
             # Spawn creature when cell is free
