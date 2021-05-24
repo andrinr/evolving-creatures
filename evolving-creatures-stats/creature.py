@@ -48,173 +48,146 @@ class Food(Figure):
 
 
 class Creature(Figure):
-    # Static
-    genomThreshold = 0.2
+    # put this inside genome
     deathProb = 0.02
-    maxEnergy = 10
-    pfSize = 5
-    pfShape = [pfSize, pfSize]
-    distanceCosts = np.zeros((pfSize*2+1, pfSize*2+1))
-    rg = np.random.default_rng()
-    
-    uniqueId = 0
 
     data = []
+    maxEnergy = 10
+    uniqueId = 0
+    rg = np.random.default_rng()
 
     def __init__(self, grid, pos, energy, genome):
         super().__init__()
-        self._pos = np.array(pos)
-        self._genome = genome
-        self._grid = grid
         self._color = None
+        self._costsPerUnitMove = 0.05
+        self._energy = energy
+        self._finalCosts = None
+        self._genome = genome
+        self._id = Creature.uniqueId
         self._isAlive = True
-        self.costsPerUnitMove = 0.02 * round(genome.get('speed'))
-        self.food = None
-        self.creatures = None
-        self.enemies = None
-        self.friends = None
-        self.congener = None
-        self.finalCosts = 0
+        self._pos = np.array(pos)
+        self._pfSize = 5 #round(self._genome.get('pfSize'))
+        self._pfShape = [self._pfSize, self._pfSize]
 
-        #self.pfSize = int(self._genome.get('size'))
+        # for random costs
+        self._randFact = 0.2
 
+        self._grid = grid
         self._grid.creatureList.append(self)
         self._grid.creatureGrid[self.gridIndex] = self
 
-        self._energy = energy
+        self._creatures = None
+        self._enemies = None
+        self._food = None
+        self._friends = None
 
-        # Assuming all creatures have the same perceptualFieldSize
-        # We calculate this here to save computing costs
-        #if not self.uniqueId:
-        self.costsDistances()
+        self._distanceCosts = np.zeros((self._pfSize*2+1, self._pfSize*2+1))
+        self._getDistanceCosts()
 
-        self._id = Creature.uniqueId
         Creature.uniqueId += 1
 
     def __str__(self):
         return 'Creature ID. = {}\nEnergyLevel = {}\n'.format(self.id, self.energy)
 
     def update(self):
+        self._checkSurvivalConditions()
 
-        if self.rg.random() < self.deathProb or self._energy <= 0:
-            self.kill()
-            return
+        if not self._isAlive:
+            return 
 
-        self.spotFood()
-        self.spotCreatures()
-        # self.spotEnemies()
-        # self.spotFriends()
-        
-        # foodCosts = self.costsFood()
-        creatureCosts = self.costsCreatures()
-        # enCosts = self.costsEnemies()
-        # frCosts = self.costsFriends()
-        randomCosts = self.costsRandom(0.2)
-        topoCosts = self.perceptualField(self._grid.topography, self.pfSize)
-        scentCosts = self.perceptualField(self._grid.scent, self.pfSize)
-        finalCosts = creatureCosts + randomCosts + topoCosts + self.distanceCosts + scentCosts# + foodCosts + enCosts + frCosts
-        self.finalCosts = finalCosts
-        # Avoid staying at the same place
-        # finalCosts[self.pfSize, self.pfSize] = 1
+        self._spotEnvironment()
+        self._getfinalCosts()
+        self._spotNextLoc()
+        self._moveToNextLoc()
+        self._eatFood()
 
-        # Target is postions of minimum of all costs
-        target = np.unravel_index(finalCosts.argmin(), finalCosts.shape) - np.array([self.pfSize, self.pfSize])
-        # only allow single grid cell movements
-        
-        move = sRound(normalize(target)) * round(min(self.genome.get('speed'), np.linalg.norm(target)))
-        
-        # Apply move
-        self.moveBy(move)
-
-        # Make scent trail
-        self._grid.scent[self.gridIndex] += 0.6
-
-        # Eat food when on top
-        if self._grid.foodGrid[self.gridIndex]:
-            self.eatFood()
-        
         # # TODO: interact with enemy when close
-        # r = self.pfSize
-        # adjEnemies = (self.enemies[r-1:r+1,r-1:r+1])[np.nonzero(self.enemies[r-1:r+1,r-1:r+1] != 0)]
+        # r = self._pfSize
+        # adjEnemies = (self._enemies[r-1:r+1,r-1:r+1])[np.nonzero(self._enemies[r-1:r+1,r-1:r+1] != 0)]
         # if len(adjEnemies) > 0:
-        #     self.attackEnemy(adjEnemies[self.rg.integers(0,high=len(adjEnemies))])
+        #     self._attackEnemy(adjEnemies[self.rg.integers(0,high=len(adjEnemies))])
 
         # # TODO: interact with friend when close
-        # adjFriends = (self.friends[r-1:r+1,r-1:r+1])[np.nonzero(self.friends[r-1:r+1,r-1:r+1] != 0)]
+        # adjFriends = (self._friends[r-1:r+1,r-1:r+1])[np.nonzero(self._friends[r-1:r+1,r-1:r+1] != 0)]
         # if len(adjFriends) > 0:
-        #     self.tradeFriend(adjFriends[self.rg.integers(0,high=len(adjFriends))])
+        #     self._tradeFriend(adjFriends[self.rg.integers(0,high=len(adjFriends))])
 
-        # Check if creature will breed
-        if self.energy > self._genome.get('energyChildrenThreshold') and self._grid.checkBounds(self.x, self.y):
-            self.breed()
-        
+        self._breed()
+
 
 
 # =============================================================================
 # actions
 # =============================================================================
-    def eatFood(self):
-        self._energy = min(self._grid.foodGrid[self.gridIndex].energy + self.energy, self.maxEnergy)
-        self._grid.foodGrid[self.gridIndex] = 0
+    def _eatFood(self):
+        if self._grid.foodGrid[self.gridIndex]:
+            self._energy = min(self._grid.foodGrid[self.gridIndex].energy + self.energy, self.maxEnergy)
+            self._grid.foodGrid[self.gridIndex] = 0
 
-    def attackEnemy(self, enemy):
+    def _attackEnemy(self, enemy):
         # Fight logic
         if (self.energy > enemy.energy):
             self._energy += enemy.energy
-            enemy.kill()
+            enemy._kill()
         # Costs for attacking a creature
         self._energy -= 0.1
         pass
 
-    def tradeFriend(self, friend):
+    def _checkSurvivalConditions(self):
+        if self.rg.random() < self.deathProb or self._energy <= 0:
+            self._kill()
+
+    def _tradeFriend(self, friend):
         # Fight logic
         # Costs for attacking a creature
         mid = (friend.energy + self.energy)/2
         self.energy = mid
         friend.energy = mid
 
-    def kill(self):
+    def _kill(self):
         self._isAlive = False
         self._grid.creatureList.remove(self)
         self._grid.creatureGrid[self.gridIndex] = 0
 
         self.data.append(self.genome.genes)
 
-    # Move self, update grid data structure and energylevel
-    def moveBy(self, vector):
-        self._energy -= self.costsMove(vector)
+    def _moveToNextLoc(self):
+        self._layScent()
+        # if self.genome.get('speed') >3:
+        #     print(self._movementCosts(self._target))
+        self._energy -= self._movementCosts(self._target)
         self._grid.creatureGrid[self.gridIndex] = 0
-        self._pos = self._pos + vector
+        self._pos = self._pos + self._target
         self._grid.creatureGrid[self.gridIndex] = self
 
-    def ckeckEnergy(self, path):
-        pass
+    def _breed(self):
+        if self.energy > self._genome.get('energyChildrenThreshold') and self._grid.checkBounds(self.x, self.y):
+            # Adjacency field are all the fields within a distance of 1
+            adjacency = self._perceptualField(self._grid.creatureGrid, 1)
+            # All instances where there is no other creature
+            free = adjacency == 0
+            # Set the aim of new children, limited by the avaiable space
+            nChildrenAim = min(int(self._genome.get('nKids')), np.count_nonzero(free))
+            nChildrenActual = 0
 
-    def breed(self):
-        # Adjacency field are all the fields within a distance of 1
-        adj = self.perceptualField(self._grid.creatureGrid, 1)
-        # All instances where there is no other creature
-        free = adj == 0
-        # Set the aim of new children, limited by the avaiable space
-        nChildrenAim = min(int(self._genome.get('nKids')), np.count_nonzero(free))
-        nChildrenActual = 0
+            self._kill()
 
-        self.kill()
+            for i, j in combinations(range(3), 2):
+                # Spawn creature when cell is free
+                if (free[i,j]):
+                    if (nChildrenActual >= nChildrenAim):
+                        break
+                    nChildrenActual += 1
+                    # Each child receives energy penalty
+                    Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim-0.1, self._genome.replicate(0.15))
 
-        for i, j in combinations(range(3), 2):
-            # Spawn creature when cell is free
-            if (free[i,j]):
-                if (nChildrenActual >= nChildrenAim):
-                    break
-                nChildrenActual += 1
-                # Each child receives energy penalty
-                Creature(self._grid, self._pos + np.array([i-1,j-1]), self.energy/nChildrenAim-0.1, self._genome.replicate(0.1))
-
+    def _layScent(self):
+        self._grid.scent[self.gridIndex] += 0.6
 
 # =============================================================================
 # perception
 # =============================================================================
-    def perceptualField(self, grid, size):
+    def _perceptualField(self, grid, size):
         r = size
         lx = self.x - r
         ly = self.y - r
@@ -223,66 +196,100 @@ class Creature(Figure):
         return grid[lx : ux, ly : uy]
 
 
-    def spotCreatures(self):
-        self.creatures = self.perceptualField(self._grid.creatureGrid, self.pfSize)
+    def _spotCreatures(self):
+        self._creatures = self._perceptualField(self._grid.creatureGrid, self._pfSize)
         # Make sure self is not spotted
-        # if np.shape(self.creatures)[0] == 0:
+        # if np.shape(self._creatures)[0] == 0:
         #     print(self.x, self.y)
-        # self.creatures[self.pfSize, self.pfSize] = 1
+        # self._creatures[self._pfSize, self._pfSize] = 1
 
-    def spotEnemies(self):
-        e = self.creatures.copy()
+    def _spotEnemies(self):
+        e = self._creatures.copy()
         n = e.shape[0]
         for i, j in product(range(n), range(n)):
             # Similar genome means the two creatures are friendly
             if e[i,j] and e[i,j].genome.difference(self.genome) < self.genome.get('genomeThreshold'):
                 e[i,j] = 0
-        self.enemies = e
+        self._enemies = e
 
-    def spotFood(self):
-        self.food = self.perceptualField(self._grid.foodGrid, self.pfSize)
+    def _spotEnvironment(self):
+        self._spotFood()
+        self._spotCreatures()
+        # self._spotEnemies()
+        # self._spotFriends()
 
-    def spotFriends(self):
-        f = self.creatures.copy()
+    def _spotFood(self):
+        self._food = self._perceptualField(self._grid.foodGrid, self._pfSize)
+
+    def _spotFriends(self):
+        f = self._creatures.copy()
         n = f.shape[0]
         for i, j in product(range(n), range(n)):
             # Similar genome means the two creatures are friendly
-            if f[i,j] and self.enemies[i,j]:
+            if f[i,j] and self._enemies[i,j]:
                 f[i,j] = 0
-        self.friends = f
+        self._friends = f
+
+    def _spotNextLoc(self):
+        # Target is postions of minimum of all costs
+        self._target = np.unravel_index(self._finalCosts.argmin(), self._finalCosts.shape) 
+        self._target -= np.array([self._pfSize, self._pfSize])
+        self._targetDist = np.linalg.norm(self._target)
+        self._target = sRound(normalize(self._target))
+        self._target *= round(min(self.genome.get('speed'), self._targetDist))
 
 # =============================================================================
 # costs
 # =============================================================================
-    def costsCreatures(self):
-        return (self.creatures != 0).astype(int)
+    def _creatureCosts(self):
+        return (self._creatures != 0).astype(int)
 
-    def costsDistances(self):
-        for i, j in product(range(2 * self.pfSize + 1), range(2 * self.pfSize + 1)):
-                self.distanceCosts[i,j] = np.linalg.norm(np.array([i - self.pfSize, j - self.pfSize]))
+    def _getDistanceCosts(self):
+        for i, j in product(range(2 * self._pfSize + 1), range(2 * self._pfSize + 1)):
+                self._distanceCosts[i,j] = np.linalg.norm(np.array([i - self._pfSize, j - self._pfSize]))
         # Normalize
-        self.distanceCosts /= np.linalg.norm(np.array(self.pfShape))
+        self._distanceCosts /= np.linalg.norm(np.array(self._pfShape))
 
-    def costsEnemies(self):
-        costs = (self.enemies != 0).astype(int) * self._genome.get('toEnemies')
+    def _enemiesCosts(self):
+        costs = (self._enemies != 0).astype(int) * self._genome.get('toEnemies')
         blured = gaussian_filter(costs,sigma=1, mode="nearest")
-        blured[self.pfSize, self.pfSize] = 0
+        blured[self._pfSize, self._pfSize] = 0
         return blured
 
-    def costsFood(self):
-        return -(self.food != 0).astype(int)
+    def _getfinalCosts(self):
+        # crucial costs
+        self._finalCosts = self._creatureCosts() + self._randomCosts() + self._topoCosts() + self._distanceCosts + self._scentCosts()
+        
+        # features costs
+        self._finalCosts += self._foodCosts()
+        # self._finalCosts += self._enemiesCosts()
+        # self._finalCosts += self._friendsCosts()
+        
+        # Avoid staying at the same place
+        # sefl._finalCosts[self._pfSize, self._pfSize] = 1
 
-    def costsFriends(self):
-        costs = (self.enemies != 0).astype(int) * self._genome.get('toFriends')
+    def _foodCosts(self):
+        return -(self._food != 0).astype(int)
+
+    def _friendsCosts(self):
+        costs = (self._enemies != 0).astype(int) * self._genome.get('toFriends')
         blured = gaussian_filter(costs,sigma=1, mode="nearest")
-        blured[self.pfSize, self.pfSize] = 0
+        blured[self._pfSize, self._pfSize] = 0
         return blured
 
-    def costsMove(self, path):
-        return np.linalg.norm(path)*self.costsPerUnitMove
+    def _movementCosts(self, path):
+        speedCosts = round(self.genome.get('speed'))
+        return np.linalg.norm(path) * self._costsPerUnitMove * speedCosts
 
-    def costsRandom(self, factor):
-        return self.rg.random(np.shape(self.distanceCosts)) * factor
+    def _randomCosts(self):
+        return self.rg.random(np.shape(self._distanceCosts)) * self._randFact
+
+    def _scentCosts(self):
+        return self._perceptualField(self._grid.scent, self._pfSize)
+
+    def _topoCosts(self):
+        # print(self._perceptualField(self._grid.topography, self._pfSize).shape)
+        return self._perceptualField(self._grid.topography, self._pfSize)
 
 # =============================================================================
 # getters
