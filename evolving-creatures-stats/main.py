@@ -156,7 +156,7 @@ class Animation:
         x = np.linspace(1, maxSpeed, 4*maxSpeed)
 
         self.axStat.clear()
-        self.axStat.set_title('Titten')
+        self.axStat.set_title('')
         self.axStat.set_xlim(1, maxSpeed)
         self.axStat.set_ylim(0, 3)
 
