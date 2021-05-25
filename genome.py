@@ -5,44 +5,57 @@ import math
 
 class Genome:
     rg =  np.random.default_rng()
-    # name, min, max
-    properties = np.array([
-        ['nChildren', 1, 15],
-        ['energyChildrenThreshold',1, 15],
-        ['toEnemies', -3, 3],
-        ['toFriends', -3, 3],
-        ['genomeThreshold', 0, 2]
-    ])
 
-    def __init__(self, genes = None):
-        self.genes = genes if np.any(genes) else\
-            self.rg.uniform(size=len(self.properties))
+    # {name: (min, max)}
+    bounds = {'speed':(1, 6),
+              'nKids': (1, 5),
+              'energyChildrenThreshold': (2, 5),
+              'toEnemies': (-3, 3),
+              'toFriends': (-3, 3),
+              'genomeThreshold': (0, 2),
+              'pfSize': (4, 10)
+              }
+
+
+    def __init__(self, genes=None, idx=None, names=None):
+        if np.any(genes):
+            self.genes = genes 
+            self.idx = idx
+        else:
+            self.names = ['energyChildrenThreshold', 'nKids']
+            self.names += names
+            self.idx = {gene: i for i, gene in enumerate(self.names)}
+            self.genes = self.randomGenes()
+
+
+    def randomGenes(self):
+        randFact = self.rg.random(len(self.names))
+        bounds = np.array([self.bounds[gene] for gene in self.names])
+        return bounds[:,0] + randFact * (bounds[:,1] - bounds[:,0])
+
 
     def get(self, name):
-        index = np.where(self.properties[:,0] == name)[0][0]
-        value = self.genes[index]
-        low = float(self.properties[index,1])
-        high = float(self.properties[index,2])
-        return self.range(value, low, high)
+        return self.genes[self.idx[name]]
 
-    def mutate(self, strength):
-        mutated = self.genes + Genome.rg.uniform(low=-strength/2, high=strength/2, size=len(self.genes))
-        return Genome(mutated)
+
+    def replicate(self, drift):
+        bounds = np.array([self.bounds[gene] for gene in self.idx.keys()])
+
+        # adapt drift to the different gene-boundaries
+        drift *= (bounds[:,1] - bounds[:,0])
+
+        mutated = self.genes + np.array([self.rg.uniform(low=-drift[i]/2, high=drift[i]/2) for i in range(len(bounds))])
+
+        # ensure that the values are inside the boundaries
+        for gene in self.idx.keys():
+            lower, upper = bounds[self.idx[gene]]
+            if lower > mutated[self.idx[gene]]:
+                mutated[self.idx[gene]] = lower
+            elif upper < mutated[self.idx[gene]]:
+                mutated[self.idx[gene]] = upper
+
+        return Genome(genes=mutated, idx=self.idx)
+
 
     def difference(self, other):
         return np.linalg.norm(self.genes-other.genes)
-
-    @ staticmethod
-    def range(value, low, high):
-        return value * (high - low) + low 
-
-    def replicate(self, rate):
-        childGenes = self.genes + 2 * rate *  self.rg.random(len(self.attributes)) - rate
-        return Genome(self.express(childGenes))
-
-    @ staticmethod
-    def express(x):
-        return norm.cdf(x, loc=0, scale=0.2)
-        # L = max - min
-        # x_0 = (max + min) / 2
-        # return L / ( 1 + math.exp(1*(value-x_0)))

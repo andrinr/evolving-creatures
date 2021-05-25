@@ -30,9 +30,9 @@ class Grid:
         self.creatureList = []
         self.creatureGrid = np.zeros(self.outerGridShape, dtype=object)
 
-        for i, j in product(range(Grid.ghostZone, N+Grid.ghostZone), range(Grid.ghostZone, N+Grid.ghostZone)):
+        for i, j in product(range(Grid.ghostZone, N+Grid.ghostZone), repeat=2):
             if (self.__rg.random() < creatureDensity):
-                Creature(self, [i, j], 1.0, Genome())
+                Creature(self, [i, j], 2, Genome(names=['speed', 'pfSize']))
 
         self.histCreatures = []
         self.histFood = []
@@ -40,14 +40,19 @@ class Grid:
     def updateAll(self):
         self.scent *= 0.9
         self.foodGrid[self.innerGridSlice] += (self.__rg.random(self.innerGridShape).astype(float) < self.dtfoodDensity).astype(int) * Food()
-
+        self.histSpeeds = []
+        self.histPFsize = []
+        self.histColors = []
         # Cannot be parallelized due to race condition issues
         # Made this to easily be able to track single instance for plotting
         shuffled = self.creatureList.copy()
         self.__rg.shuffle(shuffled)
         for creature in shuffled:
+            self.histSpeeds.append(creature.genome.get('speed'))
+            self.histPFsize.append(creature.genome.get('pfSize'))
+            self.histColors.append(creature.color)
             creature.update()
-
+        
         self.histCreatures.append(len(self.creatureList))
         self.histFood.append(np.count_nonzero(self.foodGrid))
 

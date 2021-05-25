@@ -1,74 +1,88 @@
 from creature import Creature
+from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter
 from grid import Grid
 from  time import time
 import csv
 import numpy as np
+from matplotlib.cm import RdYlBu_r as cMap
+import scipy.stats as st 
+
+
+
+GRID_SIZE = 50
+CREATURE_RATE = 0.1
+INIT_FOOD_RATE = 0.1
+GROW_FOOD_RATE = 0.0025
 
 
 class Animation:
+    DAYS = 250
+    SUBFRAMES = 1
 
-    DAYS = 100
-    SUBFRAMES = 2
-    GRIDSIZE = 30
-
-    def __init__(self):
+    def __init__(self, gridSize, creatureRate, initFoodRate, growFoodRate):
         self.elapsed = []
-
-        self.grid = Grid(self.GRIDSIZE, 0.01, 0.15, 0.03)
+        self.GRIDSIZE = gridSize
+        self.creatureRate = creatureRate
+        self.initFoodRate = initFoodRate
+        self.growFoodRate = growFoodRate
+        self.grid = Grid(gridSize, creatureRate, initFoodRate, growFoodRate)
         print("number of creatures: ", len(self.grid.creatureList))
         self.grid.updateAll()
         self.xStat = [0,1]
         self.yStat = self.grid.histCreatures*2
         
         plt.style.use("dark_background")
-        fig = plt.figure(figsize=(16,10), constrained_layout=True)
+        
+        # fig = plt.figure(figsize=(16,10), constrained_layout=True)
         figStat = plt.figure(figsize=(16,10))
         
-        fig.tight_layout()
+        # fig.tight_layout()
         figStat.tight_layout()
 
-        gs = fig.add_gridspec(nrows=4, ncols=3)
+        # gs = fig.add_gridspec(nrows=4, ncols=3)
 
-        self.axCreatures = fig.add_subplot(gs[:,0:1])
-        self.axCreatures.axis('off')
+        # self.axCreatures = fig.add_subplot(gs[:,0:1])
+        # self.axCreatures.axis('off')
 
         self.axAni = figStat.add_subplot(121)
         self.axAni.axis('off')
 
-        # self.axStat = SubplotZero(figStat, 122)
-        # figStat.add_subplot(self.axStat)
         self.axStat = figStat.add_subplot(122)
-        self.arrowSpines(self.axStat)
-        self.axStat.set_xlim(0, self.DAYS)
-        self.axStat.set_ylim(0, 200)
+        self.axStat.spines['right'].set_visible(False)
+        self.axStat.spines['top'].set_visible(False)
+        self.axStat.set_xlim(1, 6)
+        self.axStat.set_ylim(0, 100)
+
+        # self.arrowSpines(self.axStat)0
 
 
-        self.statGraph, = plt.plot([], [], '-o', markersize=2)
+        # animate random movement without any properties
+        # self.statGraph, = plt.plot([], [], 'o', markersize=20, color)
 
-        self.axPf = fig.add_subplot(gs[0,2:3])
-        self.imPf = self.axPf.imshow(self.grid.creatureList[0].finalCosts.astype(float), vmin=0, vmax=1.2, cmap='magma')
+        # self.axPf = fig.add_subplot(gs[0,2:3])
+        # self.imPf = self.axPf.imshow(self.grid.creatureList[0].finalCosts.astype(float), vmin=0, vmax=1.2, cmap='magma')
 
-        self.axFood = fig.add_subplot(gs[1,2:3])
+        # self.axFood = fig.add_subplot(gs[1,2:3])
 
-        self.axGen1 = fig.add_subplot(gs[2,2:4])
-        self.axGen1.set_title('energyChildrenThreshold (x) vs nChildren (y)')
+        # self.axGen1 = fig.add_subplot(gs[2,2:4])
+        # self.axGen1.set_title('energyChildrenThreshold (x) vs nChildren (y)')
 
-        self.axGen2 = fig.add_subplot(gs[3,2:4])
-        self.axGen2.set_title('toEnemies (x) vs genomeThreshold (y)')
+        # self.axGen2 = fig.add_subplot(gs[3,2:4])
+        # self.axGen2.set_title('toEnemies (x) vs genomeThreshold (y)')
 
-        self.fig = fig
+        # self.fig = fig
 
         self.ani = FuncAnimation(figStat, 
                                  func = self.update, 
                                  init_func = self.init, 
                                  frames = self.DAYS+1, 
-                                 interval = 10, 
-                                 repeat = False)
+                                 interval =10, 
+                                 repeat = True)
 
-        # FFwriter = FFMpegWriter(fps=10)
-        # self.ani.save('ani3.mp4', writer=FFwriter)
+        FFwriter = FFMpegWriter(fps=10)
+        self.ani.save('ani3.mp4', writer=FFwriter)
         plt.show()
             
 
@@ -79,31 +93,35 @@ class Animation:
 
     def init(self):
         pass
-        # self.axStat.set_ylabel('Creatures')
-        # self.axStat.spines['top'].set_visible(False)
-        # self.axStat.spines['right'].set_visible(False)
-        # return self.statGraph, 
 
     def update(self, iteration):
-        start = time()
+        # start = time()
         self.grid.updateAll()
-        self.elapsed.append(time() - start)
-        self.animateStat(iteration)
+        # self.elapsed.append(time() - start)
+        
+        # animate random movement without any properties
+        # self.animateLinePlot(iteration)
+        
+        # animate random movement with speed properties and also speed/PF properties
+        self.animateHistSpeed()
+
+        # animate random mov. with speed vs. perceptual field size
+        # self.animateSpeedPF()
 
         if not iteration % self.SUBFRAMES:
-            start = time()
+            # start = time()
             self.animateCreatures(self.axAni, iteration)
             # self.animateFood()
             # self.animateGen1()
             # self.animateGen2()
             # self.animatePerceptionField()
-            print('plot performance time for plotting: ', time()-start)
-            print('avg update performance time: ', sum(self.elapsed)/self.SUBFRAMES)
-            print("number of creatures: ", len(self.grid.creatureList))
-            print("current itartion number: ", iteration)
-            self.elapsed.clear()
+            # print('plot performance time for plotting: ', time()-start)
+            # print('avg update performance time: ', sum(self.elapsed)/self.SUBFRAMES)
+            # print("number of creatures: ", len(self.grid.creatureList))
+            # print("current itartion number: ", iteration)
+            # self.elapsed.clear()
 
-        return
+        return self.axAni,
 
     def animateCreatures(self, ax, day):
         ax.clear()
@@ -145,10 +163,54 @@ class Animation:
             self.imPf.set_data(self.grid.creatureList[0].finalCosts.astype(float))
             self.axPf.set_title("PF ID: " + str(self.grid.creatureList[0]._id))
 
-    def animateStat(self, day):
+    # animate random movement without any properties
+    def animateLinePlot(self, day):
         self.yStat += [self.grid.histCreatures[-1]] * 2
         self.xStat.extend([day+1, day+2])
         self.statGraph.set_data(self.xStat, self.yStat)
+
+    # animate speed
+    def animateHistSpeed(self):
+        _, maxSpeed = self.grid.creatureList[0].genome.bounds['speed']
+        x = np.linspace(1, maxSpeed, 4*maxSpeed)
+
+        self.axStat.clear()
+        self.axStat.set_xlim(1, maxSpeed)
+        self.axStat.set_ylim(0, 3)
+        self.axStat.set_xlabel('Speed')
+        self.axStat.set_title('Speed & Sense')
+        x, y = 4.8,2.7
+        self.axStat.text(x, 
+                         y, 
+                         'Grid Size: {}x{}\nCreature Rate: {}\nInit Food Rate: {}\nGrow Food Rate: {}'.format(self.GRIDSIZE,
+                                                                                                              self.GRIDSIZE,
+                                                                                                              self.creatureRate,
+                                                                                                              self.creatureRate,
+                                                                                                              self.growFoodRate),
+                         bbox = dict(facecolor='blue', alpha=.5))
+
+        n, bins, patches = self.axStat.hist(self.grid.histSpeeds,
+                                            range = [1, maxSpeed],
+                                            density = True,
+                                            bins = maxSpeed*4)
+
+        kde = st.gaussian_kde(self.grid.histSpeeds).pdf(x)
+        self.axStat.plot(x, kde, '-', label='PDF', color='yellow')
+
+        for i, p in enumerate(patches):
+            plt.setp(p, 'facecolor', cMap(round(i/(maxSpeed*5-1) * 254)))
+
+    def animateSpeedPF(self):
+        # self.statGraph.set_data(self.grid.histSpeeds, self.grid.histPFsize)
+        self.axStat.clear()
+        self.axStat.spines['right'].set_visible(False)
+        self.axStat.spines['top'].set_visible(False)
+        self.axStat.set_xlim(1, 6)
+        self.axStat.set_ylim(4, 10)
+        self.axStat.scatter(x = self.grid.histSpeeds, 
+                            y = self.grid.histPFsize,
+                            s = 80,
+                            c = self.grid.histColors)
 
     def arrowSpines(self, ax):
         rc = {"xtick.direction" : "inout", 
@@ -171,10 +233,10 @@ class Animation:
 # =============================================================================
 #           ARROWS NOT VISIBLE WHY?
 # =============================================================================
-            ax.plot((1), (0), ls="", marker=">", ms=10, color="k",
-                    transform=ax.get_yaxis_transform(), clip_on=False)
-            ax.plot((0), (1), ls="", marker="^", ms=10, color="k",
-                    transform=ax.get_xaxis_transform(), clip_on=False)
+            # ax.plot((1), (0), ls="", marker=">", ms=10, color="k",
+            #         transform=ax.get_yaxis_transform(), clip_on=False)
+            # ax.plot((0), (1), ls="", marker="^", ms=10, color="k",
+            #         transform=ax.get_xaxis_transform(), clip_on=False)
 
 
-Animation()
+Animation(GRID_SIZE, CREATURE_RATE, INIT_FOOD_RATE, GROW_FOOD_RATE)
