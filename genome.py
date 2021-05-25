@@ -23,6 +23,7 @@ class Genome:
             self.idx = idx
         else:
             self.names = ['energyChildrenThreshold', 'nKids']
+            # TODO: Whats the meaning of this?
             self.names += names
             self.idx = {gene: i for i, gene in enumerate(self.names)}
             self.genes = self.randomGenes()
@@ -59,3 +60,6 @@ class Genome:
 
     def difference(self, other):
         return np.linalg.norm(self.genes-other.genes)
+
+    def genLog(self):
+        return self.genes.tolist()

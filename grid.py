@@ -37,7 +37,7 @@ class Grid:
         self.histCreatures = []
         self.histFood = []
 
-    def updateAll(self):
+    def updateAll(self, iteration):
         self.scent *= 0.9
         self.foodGrid[self.innerGridSlice] += (self.__rg.random(self.innerGridShape).astype(float) < self.dtfoodDensity).astype(int) * Food()
         self.histSpeeds = []
@@ -51,7 +51,7 @@ class Grid:
             self.histSpeeds.append(creature.genome.get('speed'))
             self.histPFsize.append(creature.genome.get('pfSize'))
             self.histColors.append(creature.color)
-            creature.update()
+            creature.update(iteration)
         
         self.histCreatures.append(len(self.creatureList))
         self.histFood.append(np.count_nonzero(self.foodGrid))

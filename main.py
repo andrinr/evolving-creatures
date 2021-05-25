@@ -1,15 +1,18 @@
+from genome import Genome
 from creature import Creature
 from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter
 from grid import Grid
-from  time import time
+from  time import daylight, time
 import csv
 import numpy as np
 from matplotlib.cm import RdYlBu_r as cMap
 import scipy.stats as st 
 
-
+PLOT = False
+VIDEO = False
+CSV = True
 
 GRID_SIZE = 50
 CREATURE_RATE = 0.1
@@ -29,7 +32,7 @@ class Animation:
         self.growFoodRate = growFoodRate
         self.grid = Grid(gridSize, creatureRate, initFoodRate, growFoodRate)
         print("number of creatures: ", len(self.grid.creatureList))
-        self.grid.updateAll()
+        self.grid.updateAll(0)
         self.xStat = [0,1]
         self.yStat = self.grid.histCreatures*2
         
@@ -74,29 +77,45 @@ class Animation:
 
         # self.fig = fig
 
-        self.ani = FuncAnimation(figStat, 
+        if VIDEO or PLOT: 
+            self.ani = FuncAnimation(figStat, 
                                  func = self.update, 
                                  init_func = self.init, 
                                  frames = self.DAYS+1, 
                                  interval =10, 
-                                 repeat = True)
+                                 repeat = False)
 
-        FFwriter = FFMpegWriter(fps=10)
-        self.ani.save('ani3.mp4', writer=FFwriter)
-        plt.show()
-            
+        if VIDEO:
+            FFwriter = FFMpegWriter(fps=10)
+            self.ani.save('ani3.mp4', writer=FFwriter)
 
-        # with open('log.csv', 'w') as f:
-        #     writer = csv.writer(f)
-        #     for row in Creature.data:
-        #         writer.writerow(row)
+        if VIDEO or PLOT:
+            plt.show()
+        
+        if CSV and not (VIDEO and PLOT):
+            for i in range(self.DAYS+1):
+                print(round(i/self.DAYS*100, 1), 'percent done')
+                self.update(i)
+
+        if CSV:
+            with open('./logs/creatures.csv', 'w') as f:
+                writer = csv.writer(f)
+                writer.writerow(list(Genome.bounds.keys()) + ['cause', 't', 'age'])
+                for row in Creature.log:
+                    writer.writerow(row)
+
+            with open('./logs/grid.csv', 'w') as f:
+                writer = csv.writer(f)
+                writer.writerow(['t', 'nCreatures', 'nFood'])
+                for i in range(len(self.grid.histCreatures)):
+                    writer.writerow([i, self.grid.histCreatures[i], self.grid.histFood[i]])
 
     def init(self):
         pass
 
     def update(self, iteration):
         # start = time()
-        self.grid.updateAll()
+        self.grid.updateAll(iteration)
         # self.elapsed.append(time() - start)
         
         # animate random movement without any properties

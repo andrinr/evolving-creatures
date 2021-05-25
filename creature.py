@@ -51,7 +51,7 @@ class Creature(Figure):
     # put this inside genome
     deathProb = 0.02
 
-    data = []
+    log = []
     maxEnergy = 10
     uniqueId = 0
     rg = np.random.default_rng()
@@ -68,6 +68,8 @@ class Creature(Figure):
         self._pos = np.array(pos)
         self._pfSize = 5 #round(self._genome.get('pfSize'))
         self._pfShape = [self._pfSize, self._pfSize]
+        self._age = 0
+        self._currentIteration = -1
 
         # for random costs
         self._randFact = 0.2
@@ -89,11 +91,15 @@ class Creature(Figure):
     def __str__(self):
         return 'Creature ID. = {}\nEnergyLevel = {}\n'.format(self.id, self.energy)
 
-    def update(self):
+    def update(self, iteration):
+        self._currentIteration = iteration
+
         self._checkSurvivalConditions()
 
         if not self._isAlive:
             return 
+
+        self._age += 1
 
         self._spotEnvironment()
         self._getfinalCosts()
@@ -128,14 +134,19 @@ class Creature(Figure):
         # Fight logic
         if (self.energy > enemy.energy):
             self._energy += enemy.energy
-            enemy._kill()
+            enemy._die('fight')
         # Costs for attacking a creature
         self._energy -= 0.1
         pass
 
     def _checkSurvivalConditions(self):
-        if self.rg.random() < self.deathProb or self._energy <= 0:
-            self._kill()
+        if self.rg.random() < self.deathProb:
+            self._die('natural')
+            return
+
+        if self._energy <= 0:
+            self._die('energy')
+            return
 
     def _tradeFriend(self, friend):
         # Fight logic
@@ -144,12 +155,13 @@ class Creature(Figure):
         self.energy = mid
         friend.energy = mid
 
-    def _kill(self):
+    def _die(self, cause):
+        # Add to log
+        self.log.append(self.genome.genLog() + [cause, self._currentIteration, self._age])
+
         self._isAlive = False
         self._grid.creatureList.remove(self)
         self._grid.creatureGrid[self.gridIndex] = 0
-
-        self.data.append(self.genome.genes)
 
     def _moveToNextLoc(self):
         self._layScent()
@@ -170,7 +182,7 @@ class Creature(Figure):
             nChildrenAim = min(int(self._genome.get('nKids')), np.count_nonzero(free))
             nChildrenActual = 0
 
-            self._kill()
+            self._die('breed')
 
             for i, j in combinations(range(3), 2):
                 # Spawn creature when cell is free
