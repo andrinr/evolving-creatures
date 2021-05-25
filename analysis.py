@@ -26,8 +26,8 @@ df_genes = df_creatures[['speed','nKids','energyChildrenThreshold','toEnemies','
 #sns.boxplot(x='t', y='nChildren', data=df_creatures)
 #sns.boxplot(x='t', y='toEnemies', data=df_creatures)
 
-sns.displot(data=df_creatures, x='t', hue='cause',  kind="kde", multiple="fill", clip=(0, 1000))
-
+sns.kdeplot(data=df_creatures, x='t', hue='cause', clip=(0, 1000))
+print(df_creatures)
 # Plot nCreatures against nFoods
 #df_general = df_general.melt('t', var_name='cols',  value_name='vals')
 #sns.lineplot(x='t', y='vals',  hue='cols', data=df_general)
