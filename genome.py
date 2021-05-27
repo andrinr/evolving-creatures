@@ -8,8 +8,8 @@ class Genome:
 
     # {name: (min, max)}
     bounds = {'speed':(1, 6),
-              'nKids': (0, 20),
-              'energyChildrenThreshold': (0, 20),
+              'nKids': (0, 10),
+              'energyChildrenThreshold': (0, 11),
               'toEnemies': (-3, 3),
               'toFriends': (-3, 3),
               'genomeThreshold': (0, 2),

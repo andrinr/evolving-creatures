@@ -10,6 +10,8 @@ import scipy.stats as st
 import yaml
 import sys
 
+PARAMETERS = {}
+
 class Animation:
     def __init__(self):
         self.elapsed = []
@@ -17,30 +19,32 @@ class Animation:
         self.grid = Grid(self.GRIDSIZE)
         print("number of creatures: ", len(self.grid.creatureList))
         self.grid.updateAll(0)
-        self.xStat = [0,1]
-        self.yStat = self.grid.histCreatures*2
-        
-        plt.style.use("dark_background")
-        
-        # fig = plt.figure(figsize=(16,10), constrained_layout=True)
-        figStat = plt.figure(figsize=(16,10))
-        
-        # fig.tight_layout()
-        figStat.tight_layout()
 
-        # gs = fig.add_gridspec(nrows=4, ncols=3)
+        if PARAMETERS['VIDEO'] or PARAMETERS['PLOT']:
+            self.xStat = [0,1]
+            self.yStat = self.grid.histCreatures*2
+            
+            plt.style.use("dark_background")
+            
+            # fig = plt.figure(figsize=(16,10), constrained_layout=True)
+            figStat = plt.figure(figsize=(16,10))
+            
+            # fig.tight_layout()
+            figStat.tight_layout()
 
-        # self.axCreatures = fig.add_subplot(gs[:,0:1])
-        # self.axCreatures.axis('off')
+            # gs = fig.add_gridspec(nrows=4, ncols=3)
 
-        self.axAni = figStat.add_subplot(121)
-        self.axAni.axis('off')
+            # self.axCreatures = fig.add_subplot(gs[:,0:1])
+            # self.axCreatures.axis('off')
 
-        self.axStat = figStat.add_subplot(122)
-        self.axStat.spines['right'].set_visible(False)
-        self.axStat.spines['top'].set_visible(False)
-        self.axStat.set_xlim(1, 6)
-        self.axStat.set_ylim(0, 100)
+            self.axAni = figStat.add_subplot(121)
+            self.axAni.axis('off')
+
+            self.axStat = figStat.add_subplot(122)
+            self.axStat.spines['right'].set_visible(False)
+            self.axStat.spines['top'].set_visible(False)
+            self.axStat.set_xlim(1, 6)
+            self.axStat.set_ylim(0, 100)
 
         # self.arrowSpines(self.axStat)0
 
@@ -105,26 +109,27 @@ class Animation:
         # animate random movement without any properties
         # self.animateLinePlot(iteration)
         
-        # animate random movement with speed properties and also speed/PF properties
-        self.animateHistSpeed()
+        if (PARAMETERS['VIDEO'] or PARAMETERS['PLOT']):
+            # animate random movement with speed properties and also speed/PF properties
+            self.animateHistSpeed()
 
-        # animate random mov. with speed vs. perceptual field size
-        # self.animateSpeedPF()
+            # animate random mov. with speed vs. perceptual field size
+            # self.animateSpeedPF()
 
-        if not iteration % PARAMETERS['SUBFRAMES']:
-            # start = time()
-            self.animateCreatures(self.axAni, iteration)
-            # self.animateFood()
-            # self.animateGen1()
-            # self.animateGen2()
-            # self.animatePerceptionField()
-            # print('plot performance time for plotting: ', time()-start)
-            # print('avg update performance time: ', sum(self.elapsed)/self.SUBFRAMES)
-            # print("number of creatures: ", len(self.grid.creatureList))
-            # print("current itartion number: ", iteration)
-            # self.elapsed.clear()
+            if not iteration % PARAMETERS['SUBFRAMES']:
+                # start = time()
+                self.animateCreatures(self.axAni, iteration)
+                # self.animateFood()
+                # self.animateGen1()
+                # self.animateGen2()
+                # self.animatePerceptionField()
+                # print('plot performance time for plotting: ', time()-start)
+                # print('avg update performance time: ', sum(self.elapsed)/self.SUBFRAMES)
+                # print("number of creatures: ", len(self.grid.creatureList))
+                # print("current itartion number: ", iteration)
+                # self.elapsed.clear()
 
-        return self.axAni,
+            return self.axAni,
 
     def animateCreatures(self, ax, day):
         ax.clear()
@@ -242,13 +247,8 @@ class Animation:
             # ax.plot((0), (1), ls="", marker="^", ms=10, color="k",
             #         transform=ax.get_xaxis_transform(), clip_on=False)
 
-
-paramFile = './params.yaml'
-if len(sys.argv) > 1:
-    paramFile = sys.argv[1]
-
-PARAMETERS = {}
 def start(file):
+    print("Loading params from: ", file)
     global PARAMETERS
     with open(file) as f:
         # The FullLoader parameter handles the conversion from YAML
@@ -258,5 +258,3 @@ def start(file):
         Grid.PARAMETERS = PARAMETERS
     
     Animation()
-
-start(paramFile)
