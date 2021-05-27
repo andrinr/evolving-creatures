@@ -1,11 +1,12 @@
-
 from itertools import groupby
 import pandas as pd
 import seaborn as sns
 import numpy as np
 from matplotlib.animation import FuncAnimation, FFMpegWriter
-
+from main import start
 import matplotlib.pyplot as plt
+
+start('./analysis/death/params.yaml')
 
 df_creatures = pd.read_csv("./logs/creatures.csv")
 df_general = pd.read_csv("./logs/grid.csv")

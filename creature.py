@@ -49,12 +49,11 @@ class Food(Figure):
 
 class Creature(Figure):
     # put this inside genome
-    deathProb = 0.0
-
     log = []
-    maxEnergy = 10
     uniqueId = 0
     rg = np.random.default_rng()
+
+    PARAMETERS = {}
 
     def __init__(self, grid, pos, energy, genome):
         super().__init__()
@@ -127,7 +126,7 @@ class Creature(Figure):
 # =============================================================================
     def _eatFood(self):
         if self._grid.foodGrid[self.gridIndex]:
-            self._energy = min(self._grid.foodGrid[self.gridIndex].energy + self.energy, self.maxEnergy)
+            self._energy = min(self._grid.foodGrid[self.gridIndex].energy + self.energy, self.PARAMETERS['MAX_ENERGY'])
             self._grid.foodGrid[self.gridIndex] = 0
 
     def _attackEnemy(self, enemy):
@@ -140,7 +139,7 @@ class Creature(Figure):
         pass
 
     def _checkSurvivalConditions(self):
-        if self.rg.random() < self.deathProb:
+        if self.rg.random() < self.PARAMETERS['DEATH_PROB']:
             self._die('natural')
             return
 

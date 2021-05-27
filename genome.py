@@ -23,7 +23,6 @@ class Genome:
             self.idx = idx
         else:
             self.names = ['energyChildrenThreshold', 'nKids']
-            # TODO: Whats the meaning of this?
             self.names += names
             self.idx = {gene: i for i, gene in enumerate(self.names)}
             self.genes = self.randomGenes()

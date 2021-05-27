@@ -1,6 +1,4 @@
-from genome import Genome
 from creature import Creature
-from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter
 from grid import Grid
@@ -9,28 +7,14 @@ import csv
 import numpy as np
 from matplotlib.cm import RdYlBu_r as cMap
 import scipy.stats as st 
-
-PLOT = False
-VIDEO = False
-CSV = True
-
-GRID_SIZE = 50
-CREATURE_RATE = 0.1
-INIT_FOOD_RATE = 0.1
-GROW_FOOD_RATE = 0.0025
-
+import yaml
+import sys
 
 class Animation:
-    DAYS = 400
-    SUBFRAMES = 1
-
-    def __init__(self, gridSize, creatureRate, initFoodRate, growFoodRate):
+    def __init__(self):
         self.elapsed = []
-        self.GRIDSIZE = gridSize
-        self.creatureRate = creatureRate
-        self.initFoodRate = initFoodRate
-        self.growFoodRate = growFoodRate
-        self.grid = Grid(gridSize, creatureRate, initFoodRate, growFoodRate)
+        self.GRIDSIZE = PARAMETERS['GRID_SIZE']
+        self.grid = Grid(self.GRIDSIZE)
         print("number of creatures: ", len(self.grid.creatureList))
         self.grid.updateAll(0)
         self.xStat = [0,1]
@@ -77,34 +61,34 @@ class Animation:
 
         # self.fig = fig
 
-        if VIDEO or PLOT: 
+        if PARAMETERS['VIDEO'] or PARAMETERS['PLOT']: 
             self.ani = FuncAnimation(figStat, 
                                  func = self.update, 
                                  init_func = self.init, 
-                                 frames = self.DAYS+1, 
+                                 frames = PARAMETERS['DAYS']+1, 
                                  interval =10, 
                                  repeat = False)
 
-        if VIDEO:
+        if PARAMETERS['VIDEO']:
             FFwriter = FFMpegWriter(fps=10)
-            self.ani.save('ani3.mp4', writer=FFwriter)
+            self.ani.save(PARAMETERS['VIDEO_NAME'], writer=FFwriter)
 
-        if VIDEO or PLOT:
+        if PARAMETERS['PLOT'] or PARAMETERS['VIDEO']:
             plt.show()
         
-        if CSV and not (VIDEO and PLOT):
-            for i in range(self.DAYS+1):
-                print(round(i/self.DAYS*100, 1), 'percent done')
+        if PARAMETERS['CSV'] and not (PARAMETERS['VIDEO'] or PARAMETERS['PLOT']):
+            for i in range(PARAMETERS['DAYS']+1):
+                print(round(i/PARAMETERS['DAYS']*100, 1), 'percent done')
                 self.update(i)
 
-        if CSV:
-            with open('./logs/creatures.csv', 'w') as f:
+        if PARAMETERS['CSV']:
+            with open(PARAMETERS['CSV_NAME_CREATURES'], 'w') as f:
                 writer = csv.writer(f)
                 writer.writerow(['nKids', 'energyChildrenThreshold', 'speed', 'pfSize', 'cause', 't', 'age'])
                 for row in Creature.log:
                     writer.writerow(row)
 
-            with open('./logs/grid.csv', 'w') as f:
+            with open(PARAMETERS['CSV_NAME_GENERAL'], 'w') as f:
                 writer = csv.writer(f)
                 writer.writerow(['t', 'nCreatures', 'nFood'])
                 for i in range(len(self.grid.histCreatures)):
@@ -127,7 +111,7 @@ class Animation:
         # animate random mov. with speed vs. perceptual field size
         # self.animateSpeedPF()
 
-        if not iteration % self.SUBFRAMES:
+        if not iteration % PARAMETERS['SUBFRAMES']:
             # start = time()
             self.animateCreatures(self.axAni, iteration)
             # self.animateFood()
@@ -145,8 +129,9 @@ class Animation:
     def animateCreatures(self, ax, day):
         ax.clear()
         ax.axis('off')
-        ax.set_xlim(self.grid.ghostZone-2, self.GRIDSIZE + self.grid.ghostZone+2)
-        ax.set_ylim(self.grid.ghostZone-2, self.GRIDSIZE + self.grid.ghostZone+2)
+        gz = PARAMETERS['GHOST_ZONE']
+        ax.set_xlim(gz-2, PARAMETERS['GRID_SIZE'] + gz+2)
+        ax.set_ylim(gz-2, PARAMETERS['GRID_SIZE'] + gz+2)
         ax.set_title('Day {}'.format(day))
 
         xFood, yFood = np.where(self.grid.foodGrid !=0)
@@ -201,11 +186,11 @@ class Animation:
         x, y = 4.8,2.7
         self.axStat.text(x, 
                          y, 
-                         'Grid Size: {}x{}\nCreature Rate: {}\nInit Food Rate: {}\nGrow Food Rate: {}'.format(self.GRIDSIZE,
-                                                                                                              self.GRIDSIZE,
-                                                                                                              self.creatureRate,
-                                                                                                              self.creatureRate,
-                                                                                                              self.growFoodRate),
+                         'Grid Size: {}x{}\nCreature Rate: {}\nInit Food Rate: {}\nGrow Food Rate: {}'.format(PARAMETERS['GRID_SIZE'],
+                                                                                                              PARAMETERS['GRID_SIZE'],
+                                                                                                              PARAMETERS['CREATURE_RATE'],
+                                                                                                              PARAMETERS['CREATURE_RATE'],
+                                                                                                              PARAMETERS['GROW_FOOD_RATE']),
                          bbox = dict(facecolor='blue', alpha=.5))
 
         n, bins, patches = self.axStat.hist(self.grid.histSpeeds,
@@ -258,4 +243,20 @@ class Animation:
             #         transform=ax.get_xaxis_transform(), clip_on=False)
 
 
-Animation(GRID_SIZE, CREATURE_RATE, INIT_FOOD_RATE, GROW_FOOD_RATE)
+paramFile = './params.yaml'
+if len(sys.argv) > 1:
+    paramFile = sys.argv[1]
+
+PARAMETERS = {}
+def start(file):
+    global PARAMETERS
+    with open(file) as f:
+        # The FullLoader parameter handles the conversion from YAML
+        # scalar values to Python the dictionary format
+        PARAMETERS = yaml.load(f, Loader=yaml.FullLoader)
+        Creature.PARAMETERS = PARAMETERS
+        Grid.PARAMETERS = PARAMETERS
+    
+    Animation()
+
+start(paramFile)

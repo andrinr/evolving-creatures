@@ -7,19 +7,20 @@ from genome import Genome
 class Grid:
 
     #Ghost zone should be bigger than Creature.perceptionFieldSize
-    ghostZone = 10
+    PARAMETERS = {}
 
-    def __init__(self, N, creatureDensity, initFoodDensity, dtfoodDenstiy):
+    def __init__(self, N):
         self.N = N
         self.__rg =  np.random.default_rng()
 
-        self.outerGridShape = (N+self.ghostZone*2, N+self.ghostZone*2)
+        gz = self.PARAMETERS['GHOST_ZONE']
+        self.outerGridShape = (N+gz*2, N+gz*2)
         self.innerGridShape = (N,N)
-        self.innerGridSlice = (slice(self.ghostZone, N+self.ghostZone),slice(self.ghostZone, N+self.ghostZone))
+        self.innerGridSlice = (slice(gz, N+gz),slice(gz, N+gz))
 
-        self.dtfoodDensity = dtfoodDenstiy
+        self.dtfoodDensity = self.PARAMETERS['GROW_FOOD_RATE']
         self.foodGrid = np.zeros(self.outerGridShape, dtype=object)
-        self.foodGrid[self.innerGridSlice] = (self.__rg.random(self.innerGridShape).astype(float) < initFoodDensity).astype(int) * Food()
+        self.foodGrid[self.innerGridSlice] = (self.__rg.random(self.innerGridShape).astype(float) < self.PARAMETERS['INIT_FOOD_RATE']).astype(int) * Food()
 
         self.topography = np.full(self.outerGridShape, 1000, dtype=float)
         self.topography[self.innerGridSlice] = 0
@@ -30,8 +31,8 @@ class Grid:
         self.creatureList = []
         self.creatureGrid = np.zeros(self.outerGridShape, dtype=object)
 
-        for i, j in product(range(Grid.ghostZone, N+Grid.ghostZone), repeat=2):
-            if (self.__rg.random() < creatureDensity):
+        for i, j in product(range(gz, N+gz), repeat=2):
+            if (self.__rg.random() < self.PARAMETERS['CREATURE_RATE']):
                 Creature(self, [i, j], 2, Genome(names=['speed', 'pfSize']))
 
         self.histCreatures = []
@@ -59,7 +60,7 @@ class Grid:
     
     def checkBounds(self, x, y):
         N = self.N
-        gz = self.ghostZone
+        gz = self.PARAMETERS['GHOST_ZONE']
         if x < gz or x > N + gz:
             return False
         if y < gz or y > N + gz:
