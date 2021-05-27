@@ -21,7 +21,7 @@ GROW_FOOD_RATE = 0.0025
 
 
 class Animation:
-    DAYS = 250
+    DAYS = 400
     SUBFRAMES = 1
 
     def __init__(self, gridSize, creatureRate, initFoodRate, growFoodRate):
@@ -100,7 +100,7 @@ class Animation:
         if CSV:
             with open('./logs/creatures.csv', 'w') as f:
                 writer = csv.writer(f)
-                writer.writerow(list(Genome.bounds.keys()) + ['cause', 't', 'age'])
+                writer.writerow(['nKids', 'energyChildrenThreshold', 'speed', 'pfSize', 'cause', 't', 'age'])
                 for row in Creature.log:
                     writer.writerow(row)
 

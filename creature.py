@@ -49,7 +49,7 @@ class Food(Figure):
 
 class Creature(Figure):
     # put this inside genome
-    deathProb = 0.02
+    deathProb = 0.0
 
     log = []
     maxEnergy = 10
