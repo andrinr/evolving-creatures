@@ -8,7 +8,6 @@ import numpy as np
 from matplotlib.cm import RdYlBu_r as cMap
 import scipy.stats as st 
 import yaml
-import sys
 
 PARAMETERS = {}
 
