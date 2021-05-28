@@ -58,7 +58,7 @@ class Creature(Figure):
     def __init__(self, grid, pos, energy, genome):
         super().__init__()
         self._color = None
-        self._costsPerUnitMove = 0.05
+        self._costsPerUnitMove = self.PARAMETERS['COSTS_PER_MOVE']
         self._energy = energy
         self._finalCosts = None
         self._genome = genome

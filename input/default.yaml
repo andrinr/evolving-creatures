@@ -1,7 +1,8 @@
 CREATURE_RATE: 0.1
-CSV: true
+CSV: False
 CSV_NAME_CREATURES: ./logs/creatures.csv
 CSV_NAME_GENERAL: ./logs/general.csv
+COSTS_PER_MOVE : 0.05
 DAYS: 400
 DEATH_PROB: 0.0
 GHOST_ZONE: 10
@@ -10,7 +11,7 @@ GROW_FOOD_RATE: 0.0025
 INIT_FOOD_RATE: 0.1
 MAX_ENERGY: 10
 PF_SIZE: false
-PLOT: false
+PLOT: true
 SPEED: true
 SUBFRAMES: 1
 TO_ENEMIES: false
